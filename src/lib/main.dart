@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
@@ -36,10 +39,34 @@ class _MyHomePageState extends State<MyHomePage>
   late final WebViewController controller;
   late final TabController _tabController;
   List<CrawlItem> crawlItems = [];
+  List<String> invisibleList = [];
+  bool isLoading = true;
+  final TextEditingController txtUrl = TextEditingController();
+  String invisibleFilePath = '';
+
+  void initStateAsync() async {
+    invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
+    if (kDebugMode) {
+      print(invisibleFilePath);
+    }
+    File file = File(invisibleFilePath);
+    if (await file.exists()) {
+      var content = await file.readAsString();
+      dynamic decodedJson = jsonDecode(content);
+      if (decodedJson is List) {
+        invisibleList.addAll(decodedJson.cast<String>());
+      }
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+
+    initStateAsync();
 
     _tabController = TabController(length: 2, vsync: this);
 
@@ -87,6 +114,9 @@ class _MyHomePageState extends State<MyHomePage>
                     '[]';
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 setState(() {
+                  for (var item in invisibleList) {
+                    decodedLinks.removeWhere((e) => e['href'] == item);
+                  }
                   crawlItems.addAll(
                     decodedLinks.map((e) => CrawlItem.fromJson(e)),
                   );
@@ -115,8 +145,7 @@ class _MyHomePageState extends State<MyHomePage>
               //   }
               // },
             ),
-          )
-          ..loadRequest(Uri.parse(''));
+          );
   }
 
   @override
@@ -136,7 +165,32 @@ class _MyHomePageState extends State<MyHomePage>
             scrollDirection: Axis.vertical,
             child: Column(
               children: [
-                Column(children: [Text('data')]),
+                Column(
+                  children: [
+                    TextField(
+                      controller: txtUrl,
+                      // onChanged: (value) {
+                      //   setState(() {
+                      //     _inputText = value;
+                      //   });
+                      // },
+                      decoration: const InputDecoration(
+                        labelText: 'Enter text here',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    TextButton(
+                      onPressed:
+                          isLoading
+                              ? null
+                              : () {
+                                controller.loadRequest(Uri.parse(txtUrl.text));
+                              },
+                      child: Text('Crawl'),
+                    ),
+                  ],
+                ),
                 Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start, // Align children to the start
@@ -150,7 +204,21 @@ class _MyHomePageState extends State<MyHomePage>
                                   Column(
                                     children: [
                                       TextButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          File file = File(invisibleFilePath);
+                                          invisibleList.add(e.href);
+                                          file.writeAsStringSync(
+                                            jsonEncode(invisibleList),
+                                          );
+                                          setState(() {
+                                            crawlItems.remove(
+                                              crawlItems.firstWhere(
+                                                (element) =>
+                                                    element.href == e.href,
+                                              ),
+                                            );
+                                          });
+                                        },
                                         child: Text('Unfollow'),
                                       ),
                                       TextButton(
@@ -172,7 +240,32 @@ class _MyHomePageState extends State<MyHomePage>
                                     ),
                                   ),
                                   SizedBox(width: 60, child: Text(e.duration)),
-                                  Text(e.title),
+                                  // Text(e.title),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final Uri url = Uri.parse(e.href);
+                                      if (await canLaunchUrl(url)) {
+                                        await launchUrl(url);
+                                      } else {
+                                        // show error
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(content: Text(e.title)),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    child: Text(
+                                      e.title,
+                                      style: TextStyle(
+                                        // fontSize: 20,
+                                        color: Colors.blueAccent,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
