@@ -140,16 +140,38 @@ class _MyHomePageState extends State<MyHomePage>
               children:
                   crawlItems
                       .map(
-                        (e) => Row(
-                          children: [
-                            SizedBox(
-                              width: 100,
-                              height: 100,
-                              child: Image.network(e.image, fit: BoxFit.cover),
-                            ),
-                            SizedBox(width: 60, child: Text(e.duration)),
-                            Text(e.title),
-                          ],
+                        (e) => Visibility(
+                          visible: e.isInvisible == false,
+                          child: Row(
+                            children: [
+                              Column(
+                                children: [
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Text('Unfollow'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        e.isInvisible = true;
+                                      });
+                                    },
+                                    child: Text('Invisible'),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                width: 100,
+                                height: 100,
+                                child: Image.network(
+                                  e.image,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              SizedBox(width: 60, child: Text(e.duration)),
+                              Text(e.title),
+                            ],
+                          ),
                         ),
                       )
                       .toList(),
@@ -167,6 +189,7 @@ class CrawlItem {
   final String image;
   final String duration;
   final String title;
+  bool isInvisible = false;
 
   CrawlItem({
     required this.href,
