@@ -161,119 +161,102 @@ class _MyHomePageState extends State<MyHomePage>
       body: TabBarView(
         controller: _tabController,
         children: <Widget>[
-          SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: Column(
-              children: [
-                Column(
-                  children: [
-                    TextField(
-                      controller: txtUrl,
-                      // onChanged: (value) {
-                      //   setState(() {
-                      //     _inputText = value;
-                      //   });
-                      // },
-                      decoration: const InputDecoration(
-                        labelText: 'Enter text here',
-                        border: OutlineInputBorder(),
-                      ),
+          Column(
+            children: [
+              Column(
+                children: [
+                  TextField(
+                    controller: txtUrl,
+                    // onChanged: (value) {
+                    //   setState(() {
+                    //     _inputText = value;
+                    //   });
+                    // },
+                    decoration: const InputDecoration(
+                      labelText: 'Enter text here',
+                      border: OutlineInputBorder(),
                     ),
-
-                    TextButton(
-                      onPressed:
-                          isLoading
-                              ? null
-                              : () {
-                                controller.loadRequest(Uri.parse(txtUrl.text));
-                              },
-                      child: Text('Crawl'),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Align children to the start
-                  children:
-                      crawlItems
-                          .map(
-                            (e) => Visibility(
-                              visible: e.isInvisible == false,
-                              child: Row(
-                                children: [
-                                  Column(
-                                    children: [
-                                      TextButton(
-                                        onPressed: () {
-                                          File file = File(invisibleFilePath);
-                                          invisibleList.add(e.href);
-                                          file.writeAsStringSync(
-                                            jsonEncode(invisibleList),
-                                          );
-                                          setState(() {
-                                            crawlItems.remove(
-                                              crawlItems.firstWhere(
-                                                (element) =>
-                                                    element.href == e.href,
-                                              ),
-                                            );
-                                          });
-                                        },
-                                        child: Text('Unfollow'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            e.isInvisible = true;
-                                          });
-                                        },
-                                        child: Text('Invisible'),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: 100,
-                                    height: 100,
-                                    child: Image.network(
-                                      e.image,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  SizedBox(width: 60, child: Text(e.duration)),
-                                  // Text(e.title),
-                                  GestureDetector(
-                                    onTap: () async {
-                                      final Uri url = Uri.parse(e.href);
-                                      if (await canLaunchUrl(url)) {
-                                        await launchUrl(url);
-                                      } else {
-                                        // show error
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(content: Text(e.title)),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    child: Text(
-                                      e.title,
-                                      style: TextStyle(
-                                        // fontSize: 20,
-                                        color: Colors.blueAccent,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                  ),
+                  TextButton(
+                    onPressed:
+                        isLoading
+                            ? null
+                            : () {
+                              controller.loadRequest(Uri.parse(txtUrl.text));
+                            },
+                    child: Text('Crawl'),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: crawlItems.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final item = crawlItems[index];
+                    return Visibility(
+                      visible: item.isInvisible == false,
+                      child: Row(
+                        children: [
+                          Column(
+                            children: [
+                              TextButton(
+                                onPressed: () {
+                                  File file = File(invisibleFilePath);
+                                  invisibleList.add(item.href);
+                                  file.writeAsStringSync(
+                                    jsonEncode(invisibleList),
+                                  );
+                                  setState(() {
+                                    crawlItems.removeAt(index);
+                                  });
+                                },
+                                child: Text('Unfollow'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    item.isInvisible = true;
+                                  });
+                                },
+                                child: Text('Invisible'),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: Image.network(item.image, fit: BoxFit.cover),
+                          ),
+                          SizedBox(width: 60, child: Text(item.duration)),
+                          GestureDetector(
+                            onTap: () async {
+                              final Uri url = Uri.parse(item.href);
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url);
+                              } else {
+                                // show error
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(item.title)),
+                                  );
+                                }
+                              }
+                            },
+                            child: Text(
+                              item.title,
+                              style: TextStyle(
+                                color: Colors.blueAccent,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                          )
-                          .toList(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           WebViewWidget(controller: controller),
         ],
