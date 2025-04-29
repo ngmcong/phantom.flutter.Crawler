@@ -135,46 +135,51 @@ class _MyHomePageState extends State<MyHomePage>
           SingleChildScrollView(
             scrollDirection: Axis.vertical,
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align children to the start
-              children:
-                  crawlItems
-                      .map(
-                        (e) => Visibility(
-                          visible: e.isInvisible == false,
-                          child: Row(
-                            children: [
-                              Column(
+              children: [
+                Column(children: [Text('data')]),
+                Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Align children to the start
+                  children:
+                      crawlItems
+                          .map(
+                            (e) => Visibility(
+                              visible: e.isInvisible == false,
+                              child: Row(
                                 children: [
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: Text('Unfollow'),
+                                  Column(
+                                    children: [
+                                      TextButton(
+                                        onPressed: () {},
+                                        child: Text('Unfollow'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            e.isInvisible = true;
+                                          });
+                                        },
+                                        child: Text('Invisible'),
+                                      ),
+                                    ],
                                   ),
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        e.isInvisible = true;
-                                      });
-                                    },
-                                    child: Text('Invisible'),
+                                  SizedBox(
+                                    width: 100,
+                                    height: 100,
+                                    child: Image.network(
+                                      e.image,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
+                                  SizedBox(width: 60, child: Text(e.duration)),
+                                  Text(e.title),
                                 ],
                               ),
-                              SizedBox(
-                                width: 100,
-                                height: 100,
-                                child: Image.network(
-                                  e.image,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              SizedBox(width: 60, child: Text(e.duration)),
-                              Text(e.title),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
+                            ),
+                          )
+                          .toList(),
+                ),
+              ],
             ),
           ),
           WebViewWidget(controller: controller),
