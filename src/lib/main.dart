@@ -45,6 +45,7 @@ class _MyHomePageState extends State<MyHomePage>
   String invisibleFilePath = '';
   bool isManual = false;
   String? nextUrl;
+  int page = 0;
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -175,6 +176,7 @@ class _MyHomePageState extends State<MyHomePage>
                     if (crawlItems.any((e) => e.href == item.href)) continue;
                     crawlItems.add(item);
                   }
+                  page++;
                 });
                 nextUrl =
                     await controller.runJavaScriptReturningResult('''
@@ -251,6 +253,7 @@ class _MyHomePageState extends State<MyHomePage>
                             isLoading
                                 ? null
                                 : () {
+                                  page = 0;
                                   loadRequest(Uri.parse(txtUrl.text));
                                 },
                         child: Text('Crawl'),
@@ -267,6 +270,7 @@ class _MyHomePageState extends State<MyHomePage>
                           child: Text('Next page'),
                         ),
                       ),
+                      Text('Page: $page, ${crawlItems.length} items'),
                     ],
                   ),
                 ],
