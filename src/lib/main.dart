@@ -43,6 +43,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
   String invisibleFilePath = '';
+  bool isManual = true;
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -113,13 +114,30 @@ class _MyHomePageState extends State<MyHomePage>
                         as String? ??
                     '[]';
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
+                var decodedItems = decodedLinks.map(
+                  (e) => CrawlItem.fromJson(e),
+                );
+                if (isManual && invisibleList.isNotEmpty) {
+                  for (var item in invisibleList) {
+                    if (decodedItems.any((e) => e.href == item) == false) {
+                      continue;
+                    }
+                    await controller.runJavaScript('''
+                          (function() {
+                            const targetHref = "$item"; // Replace "xxx" with the desired href value
+                            const element = document.querySelector('a[href="' + targetHref + '"]'); // Find the *first* matching element
+                            if (element && element.parentNode) {
+                              element.parentNode.remove();
+                            }
+                          })();
+                          ''');
+                  }
+                }
                 setState(() {
                   for (var item in invisibleList) {
                     decodedLinks.removeWhere((e) => e['href'] == item);
                   }
-                  crawlItems.addAll(
-                    decodedLinks.map((e) => CrawlItem.fromJson(e)),
-                  );
+                  crawlItems.addAll(decodedItems);
                 });
                 var nextUrl =
                     await controller.runJavaScriptReturningResult('''
@@ -133,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                         as String? ??
                     '';
-                if (nextUrl.isNotEmpty) {
+                if (nextUrl.isNotEmpty && isManual == false) {
                   await controller.loadRequest(Uri.parse(nextUrl));
                 }
               },
@@ -157,7 +175,20 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My WebView')),
+      appBar: AppBar(
+        title: const Text('My WebView'),
+        bottom:
+            isManual
+                ? TabBar(
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(text: 'Tab 1'),
+                    Tab(text: 'Tab 2'),
+                    // Tab(text: 'Tab 3'),
+                  ],
+                )
+                : null,
+      ),
       body: TabBarView(
         controller: _tabController,
         children: <Widget>[
