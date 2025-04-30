@@ -63,6 +63,18 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
+  Future<void> removeLinkElement(String href) async {
+    await controller.runJavaScript('''
+      (function() {
+        const targetHref = "$href"; // Replace "xxx" with the desired href value
+        const element = document.querySelector('a[href="' + targetHref + '"]'); // Find the *first* matching element
+        if (element && element.parentNode) {
+          element.parentNode.remove();
+        }
+      })();
+      ''');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,17 +134,20 @@ class _MyHomePageState extends State<MyHomePage>
                     if (decodedItems.any((e) => e.href == item) == false) {
                       continue;
                     }
-                    await controller.runJavaScript('''
-                          (function() {
-                            const targetHref = "$item"; // Replace "xxx" with the desired href value
-                            const element = document.querySelector('a[href="' + targetHref + '"]'); // Find the *first* matching element
-                            if (element && element.parentNode) {
-                              element.parentNode.remove();
-                            }
-                          })();
-                          ''');
+                    await removeLinkElement(item);
                   }
                 }
+
+                //hide trending
+                await controller.runJavaScript('''
+                  (function() {
+                    const element = document.querySelector("div.main-wrap").querySelector('div.root-b7566.desktop-b7566.insideVideoList-b7566.thumbsScrollable-b7566'); // Find the *first* matching element
+                    if (element) {
+                      element.remove();
+                    }
+                  })();
+                  ''');
+
                 setState(() {
                   for (var item in invisibleList) {
                     decodedLinks.removeWhere((e) => e['href'] == item);
@@ -232,8 +247,9 @@ class _MyHomePageState extends State<MyHomePage>
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  File file = File(invisibleFilePath);
                                   invisibleList.add(item.href);
+                                  removeLinkElement(item.href);
+                                  File file = File(invisibleFilePath);
                                   file.writeAsStringSync(
                                     jsonEncode(invisibleList),
                                   );
