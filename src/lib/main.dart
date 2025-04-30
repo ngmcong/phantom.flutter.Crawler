@@ -43,7 +43,8 @@ class _MyHomePageState extends State<MyHomePage>
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
   String invisibleFilePath = '';
-  bool isManual = true;
+  bool isManual = false;
+  String? nextUrl;
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -67,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage>
     await controller.runJavaScript('''
       (function() {
         const targetHref = "$href"; // Replace "xxx" with the desired href value
-        const element = document.querySelector('a[href="' + targetHref + '"]'); // Find the *first* matching element
+        const element = document.querySelector('a[href="' + targetHref + '"]');
         if (element && element.parentNode) {
           element.parentNode.remove();
         }
@@ -88,16 +89,6 @@ class _MyHomePageState extends State<MyHomePage>
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..setNavigationDelegate(
             NavigationDelegate(
-              // onProgress: (int progress) {
-              //   if (kDebugMode) {
-              //     print('WebView progress: $progress');
-              //   }
-              // },
-              // onPageStarted: (String url) {
-              //   if (kDebugMode) {
-              //     print('WebView started loading: $url');
-              //   }
-              // },
               onPageFinished: (String url) async {
                 await controller.runJavaScript('''
                     (function() {
@@ -141,20 +132,51 @@ class _MyHomePageState extends State<MyHomePage>
                 //hide trending
                 await controller.runJavaScript('''
                   (function() {
-                    const element = document.querySelector("div.main-wrap").querySelector('div.root-b7566.desktop-b7566.insideVideoList-b7566.thumbsScrollable-b7566'); // Find the *first* matching element
-                    if (element) {
-                      element.remove();
+                    const h2Elements = document.getElementsByTagName('h2');
+                    for (let h2 of h2Elements) {
+                      if (h2.innerText.trim() === "Trending 3d Hentai Moments") {
+                        let parent = h2.parentNode;
+                        while (parent) {
+                          if (parent.getAttribute("data-block") === "moments") {
+                            parent.remove();
+                          }
+                          parent = parent.parentNode;
+                        }
+                        return; // Return the innerText if found
+                      }
                     }
+                    return; // Return null if no matching element is found
                   })();
                   ''');
+                //hide premium = goR-Rvpremium-n-overlay
+                await controller.runJavaScript('''
+                    (function() {
+                      const element = document.querySelector('div.goR-Rvpremium-n-overlay');
+                      if (element) {
+                        element.remove();
+                      }
+                    })();
+                    ''');
+                //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
+                await controller.runJavaScript('''
+                    (function() {
+                      const element = document.querySelector('div.goR-Rvright-rectangle.goR-Rvright-rectangle--video.goR-Rv.goR-Rvno-ts-init');
+                      if (element) {
+                        element.remove();
+                      }
+                    })();
+                    ''');
 
                 setState(() {
                   for (var item in invisibleList) {
                     decodedLinks.removeWhere((e) => e['href'] == item);
                   }
-                  crawlItems.addAll(decodedItems);
+                  for (var item in decodedItems) {
+                    if (crawlItems.any((e) => e.href == item.href)) continue;
+                    crawlItems.add(item);
+                  }
                 });
-                var nextUrl =
+                nextUrl =
                     await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
@@ -166,19 +188,19 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                         as String? ??
                     '';
-                if (nextUrl.isNotEmpty && isManual == false) {
-                  await controller.loadRequest(Uri.parse(nextUrl));
+                if (nextUrl != null &&
+                    nextUrl!.isNotEmpty &&
+                    isManual == false) {
+                  await loadRequest(Uri.parse(nextUrl!));
                 }
               },
-              // onWebResourceError: (WebResourceError error) {
-              //   if (kDebugMode) {
-              //     print(
-              //       'WebResourceError: ${error.description}, code: ${error.errorCode}',
-              //     );
-              //   }
-              // },
             ),
           );
+  }
+
+  Future<void> loadRequest(Uri uri) async {
+    nextUrl = null;
+    await controller.loadRequest(uri);
   }
 
   @override
@@ -190,20 +212,19 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My WebView'),
-        bottom:
-            isManual
-                ? TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: 'Tab 1'),
-                    Tab(text: 'Tab 2'),
-                    // Tab(text: 'Tab 3'),
-                  ],
-                )
-                : null,
-      ),
+      appBar:
+          isManual == false
+              ? null
+              : AppBar(
+                title: null,
+                bottom:
+                    isManual
+                        ? TabBar(
+                          controller: _tabController,
+                          tabs: const [Tab(text: 'Tab 1'), Tab(text: 'Tab 2')],
+                        )
+                        : null,
+              ),
       body: TabBarView(
         controller: _tabController,
         children: <Widget>[
@@ -223,14 +244,30 @@ class _MyHomePageState extends State<MyHomePage>
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  TextButton(
-                    onPressed:
-                        isLoading
-                            ? null
-                            : () {
-                              controller.loadRequest(Uri.parse(txtUrl.text));
-                            },
-                    child: Text('Crawl'),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed:
+                            isLoading
+                                ? null
+                                : () {
+                                  loadRequest(Uri.parse(txtUrl.text));
+                                },
+                        child: Text('Crawl'),
+                      ),
+                      Visibility(
+                        visible: isManual,
+                        child: TextButton(
+                          onPressed:
+                              nextUrl == null
+                                  ? null
+                                  : () {
+                                    loadRequest(Uri.parse(nextUrl!));
+                                  },
+                          child: Text('Next page'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
