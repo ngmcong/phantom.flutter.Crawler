@@ -46,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool isManual = false;
   String? nextUrl;
   int page = 0;
+  bool isShowInvisible = false;
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -192,7 +193,8 @@ class _MyHomePageState extends State<MyHomePage>
                     '';
                 if (nextUrl != null &&
                     nextUrl!.isNotEmpty &&
-                    isManual == false) {
+                    isManual == false &&
+                    crawlItems.length <= 1000) {
                   await loadRequest(Uri.parse(nextUrl!));
                 }
               },
@@ -271,6 +273,15 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
                       ),
                       Text('Page: $page, ${crawlItems.length} items'),
+                      Checkbox(
+                        value: isShowInvisible,
+                        onChanged: (value) {
+                          setState(() {
+                            isShowInvisible = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Show invisible'),
                     ],
                   ),
                 ],
@@ -281,7 +292,7 @@ class _MyHomePageState extends State<MyHomePage>
                   itemBuilder: (BuildContext context, int index) {
                     final item = crawlItems[index];
                     return Visibility(
-                      visible: item.isInvisible == false,
+                      visible: item.isInvisible == false || isShowInvisible,
                       child: Row(
                         children: [
                           Column(
