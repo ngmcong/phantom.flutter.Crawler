@@ -47,6 +47,8 @@ class _MyHomePageState extends State<MyHomePage>
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
+  List<String>? sources;
+  String? sourceSelected;
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -78,9 +80,25 @@ class _MyHomePageState extends State<MyHomePage>
       ''');
   }
 
+  String stringBase64Decode(String? value) {
+    if (value == null || value.isEmpty) return "";
+    // Decode the Base64 string to a List<int> (bytes)
+    List<int> decodedBytes = base64Decode(value);
+
+    // Convert the bytes to a UTF-8 string (most common encoding)
+    String decodedString = utf8.decode(decodedBytes);
+    return decodedString;
+  }
+
   @override
   void initState() {
     super.initState();
+
+    sources ??= [
+      stringBase64Decode("eGhzcG90LmNvbQ=="),
+      stringBase64Decode('amF2aGR6LnBybw=='),
+    ];
+    sourceSelected = '0';
 
     initStateAsync();
 
@@ -92,7 +110,9 @@ class _MyHomePageState extends State<MyHomePage>
           ..setNavigationDelegate(
             NavigationDelegate(
               onPageFinished: (String url) async {
-                await controller.runJavaScript('''
+                if (sourceSelected == '0') {
+                  //Click confirm age button if exists
+                  await controller.runJavaScript('''
                     (function() {
                       const button = document.querySelector('button.root-64d24.size-big-64d24.color-brand-64d24.fullWidth-64d24');
                       if (button) {
@@ -103,36 +123,8 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                String linksJson =
-                    await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
-                      const imageData = Array.from(images).map(item => ({
-                        href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
-                        image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
-                        duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
-                        title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
-                      }));
-                      return JSON.stringify(imageData);
-                    })();
-                    ''')
-                        as String? ??
-                    '[]';
-                List<dynamic> decodedLinks = jsonDecode(linksJson);
-                var decodedItems = decodedLinks.map(
-                  (e) => CrawlItem.fromJson(e),
-                );
-                if (isManual && invisibleList.isNotEmpty) {
-                  for (var item in invisibleList) {
-                    if (decodedItems.any((e) => e.href == item) == false) {
-                      continue;
-                    }
-                    await removeLinkElement(item);
-                  }
-                }
-
-                //hide trending
-                await controller.runJavaScript('''
+                  //hide trending
+                  await controller.runJavaScript('''
                   (function() {
                     const h2Elements = document.getElementsByTagName('h2');
                     for (let h2 of h2Elements) {
@@ -150,8 +142,8 @@ class _MyHomePageState extends State<MyHomePage>
                     return; // Return null if no matching element is found
                   })();
                   ''');
-                //hide premium = goR-Rvpremium-n-overlay
-                await controller.runJavaScript('''
+                  //hide premium = goR-Rvpremium-n-overlay
+                  await controller.runJavaScript('''
                     (function() {
                       const element = document.querySelector('div.goR-Rvpremium-n-overlay');
                       if (element) {
@@ -159,8 +151,8 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
-                await controller.runJavaScript('''
+                  //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
+                  await controller.runJavaScript('''
                     (function() {
                       const element = document.querySelector('div.goR-Rvright-rectangle.goR-Rvright-rectangle--video.goR-Rv.goR-Rvno-ts-init');
                       if (element) {
@@ -168,6 +160,63 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
+                }
+
+                //Crawl data
+                String linksJson;
+                if (sourceSelected == '0') {
+                  linksJson =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
+                      const imageData = Array.from(images).map(item => ({
+                        href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
+                        image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
+                        duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
+                        title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
+                      }));
+                      return JSON.stringify(imageData);
+                    })();
+                    ''')
+                          as String? ??
+                      '[]';
+                } else {
+                  linksJson =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.getAttribute("href"),
+                        image: item.querySelector("img").getAttribute("src"),
+                        duration: "",
+                        title: item.getAttribute("title"),
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+                          as String? ??
+                      '[]';
+                }
+                List<dynamic> decodedLinks = jsonDecode(linksJson);
+                List<CrawlItem> decodedItems =
+                    decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
+                if (sourceSelected == '1') {
+                  var rootUrl = txtUrl.text.substring(
+                    0,
+                    txtUrl.text.indexOf('/', 10),
+                  );
+                  for (var e in decodedItems) {
+                    e.image = rootUrl + e.image;
+                  }
+                }
+                if (isManual && invisibleList.isNotEmpty) {
+                  for (var item in invisibleList) {
+                    if (decodedItems.any((e) => e.href == item) == false) {
+                      continue;
+                    }
+                    await removeLinkElement(item);
+                  }
+                }
 
                 setState(() {
                   for (var item in invisibleList) {
@@ -179,8 +228,11 @@ class _MyHomePageState extends State<MyHomePage>
                   }
                   page++;
                 });
-                nextUrl =
-                    await controller.runJavaScriptReturningResult('''
+
+                //Call next page
+                if (sourceSelected == '0') {
+                  nextUrl =
+                      await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
                       if (element) {
@@ -189,8 +241,29 @@ class _MyHomePageState extends State<MyHomePage>
                       return '';
                     })();
                     ''')
-                        as String? ??
-                    '';
+                          as String? ??
+                      '';
+                } else {
+                  nextUrl =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelectorAll("a.page-numbers");
+                      if (element) {
+                        return element[element.length - 1].getAttribute("href");
+                      }
+                      return '';
+                    })();
+                    ''')
+                          as String? ??
+                      '';
+                  if (nextUrl != null && nextUrl!.isNotEmpty) {
+                    var rootUrl = txtUrl.text.substring(
+                      0,
+                      txtUrl.text.indexOf('/', 10),
+                    );
+                    nextUrl = rootUrl + nextUrl!;
+                  }
+                }
                 if (nextUrl != null &&
                     nextUrl!.isNotEmpty &&
                     isManual == false &&
@@ -250,6 +323,26 @@ class _MyHomePageState extends State<MyHomePage>
                   ),
                   Row(
                     children: [
+                      DropdownButton(
+                        value: sourceSelected,
+                        items:
+                            sources!.indexed
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: '${e.$1}',
+                                    child: Text(e.$2),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (value) {
+                          if (kDebugMode) {
+                            print('selected: $value');
+                          }
+                          setState(() {
+                            sourceSelected = value;
+                          });
+                        },
+                      ),
                       TextButton(
                         onPressed:
                             isLoading
@@ -366,7 +459,7 @@ class _MyHomePageState extends State<MyHomePage>
 
 class CrawlItem {
   final String href;
-  final String image;
+  String image;
   final String duration;
   final String title;
   bool isInvisible = false;
