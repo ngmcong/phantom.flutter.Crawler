@@ -186,8 +186,8 @@ class _MyHomePageState extends State<MyHomePage>
                     (function() {
                       const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
                       const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.getAttribute("href"),
-                        image: item.querySelector("img").getAttribute("src"),
+                        href: item.href,
+                        image: item.querySelector("img").src,
                         duration: "",
                         title: item.getAttribute("title"),
                       }));
@@ -200,15 +200,6 @@ class _MyHomePageState extends State<MyHomePage>
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 List<CrawlItem> decodedItems =
                     decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
-                if (sourceSelected == '1') {
-                  var rootUrl = txtUrl.text.substring(
-                    0,
-                    txtUrl.text.indexOf('/', 10),
-                  );
-                  for (var e in decodedItems) {
-                    e.image = rootUrl + e.image;
-                  }
-                }
                 if (isManual && invisibleList.isNotEmpty) {
                   for (var item in invisibleList) {
                     if (decodedItems.any((e) => e.href == item) == false) {
@@ -249,20 +240,13 @@ class _MyHomePageState extends State<MyHomePage>
                     (function() {
                       const element = document.querySelectorAll("a.page-numbers");
                       if (element) {
-                        return element[element.length - 1].getAttribute("href");
+                        return element[element.length - 1].href;
                       }
                       return '';
                     })();
                     ''')
                           as String? ??
                       '';
-                  if (nextUrl != null && nextUrl!.isNotEmpty) {
-                    var rootUrl = txtUrl.text.substring(
-                      0,
-                      txtUrl.text.indexOf('/', 10),
-                    );
-                    nextUrl = rootUrl + nextUrl!;
-                  }
                 }
                 if (nextUrl != null &&
                     nextUrl!.isNotEmpty &&
@@ -459,7 +443,7 @@ class _MyHomePageState extends State<MyHomePage>
 
 class CrawlItem {
   final String href;
-  String image;
+  final String image;
   final String duration;
   final String title;
   bool isInvisible = false;
