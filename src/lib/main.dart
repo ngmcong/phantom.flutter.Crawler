@@ -208,18 +208,18 @@ class _MyHomePageState extends State<MyHomePage>
                     await removeLinkElement(item);
                   }
                 }
-
-                setState(() {
-                  for (var item in invisibleList) {
-                    decodedLinks.removeWhere((e) => e['href'] == item);
-                  }
-                  for (var item in decodedItems) {
-                    if (crawlItems.any((e) => e.href == item.href)) continue;
-                    crawlItems.add(item);
-                  }
-                  page++;
-                });
-
+                for (var item in invisibleList) {
+                  decodedItems.removeWhere((e) => e.href == item);
+                }
+                if (decodedItems.isNotEmpty) {
+                  setState(() {
+                    for (var item in decodedItems) {
+                      if (crawlItems.any((e) => e.href == item.href)) continue;
+                      crawlItems.add(item);
+                    }
+                    page++;
+                  });
+                }
                 //Call next page
                 if (sourceSelected == '0') {
                   nextUrl =
