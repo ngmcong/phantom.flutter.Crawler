@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crawler/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -49,6 +51,32 @@ class _MyHomePageState extends State<MyHomePage>
   bool isShowInvisible = false;
   List<String>? sources;
   String? sourceSelected;
+  List<String>? exists;
+  String? currentUrl;
+
+  void getDriveData() async {
+    final url = Uri.parse(
+      'https://sheets.googleapis.com/v4/spreadsheets/13q0i2NrnZ2DS231dXK0TCGWwhHa2NVOkH6AHii7SlCU/values/A:A',
+    );
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $ggSheetToken'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        exists =
+            data['values']
+                .map<String>((e) => e[0].toString())
+                .toList()
+                .cast<String>();
+      });
+    } else {
+      if (kDebugMode) {
+        print('failed to load data: ${response.statusCode}');
+      }
+    }
+  }
 
   void initStateAsync() async {
     invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
@@ -101,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage>
     sourceSelected = '0';
 
     initStateAsync();
+    getDriveData();
 
     _tabController = TabController(length: 2, vsync: this);
 
@@ -200,6 +229,30 @@ class _MyHomePageState extends State<MyHomePage>
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 List<CrawlItem> decodedItems =
                     decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
+                if (exists != null && exists!.isNotEmpty) {
+                  List<String> foundNames = [];
+                  for (var item in exists!) {
+                    var foundItem =
+                        decodedItems
+                            .where(
+                              (e) =>
+                                  e.title == item ||
+                                  e.title.startsWith('[$item]'),
+                            )
+                            .firstOrNull;
+                    if (foundItem == null) {
+                      continue;
+                    }
+                    addInvisibleList(foundItem.href);
+                    foundNames.add(item);
+                  }
+                  for (var item in foundNames) {
+                    exists!.remove(item);
+                  }
+                }
+                for (var item in invisibleList) {
+                  decodedItems.removeWhere((e) => e.href == item);
+                }
                 if (isManual && invisibleList.isNotEmpty) {
                   for (var item in invisibleList) {
                     if (decodedItems.any((e) => e.href == item) == false) {
@@ -207,9 +260,6 @@ class _MyHomePageState extends State<MyHomePage>
                     }
                     await removeLinkElement(item);
                   }
-                }
-                for (var item in invisibleList) {
-                  decodedItems.removeWhere((e) => e.href == item);
                 }
                 if (decodedItems.isNotEmpty) {
                   setState(() {
@@ -261,6 +311,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> loadRequest(Uri uri) async {
     nextUrl = null;
+    currentUrl = uri.toString();
     await controller.loadRequest(uri);
   }
 
@@ -268,6 +319,15 @@ class _MyHomePageState extends State<MyHomePage>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void addInvisibleList(String href) async {
+    if (invisibleList.contains(href)) {
+      return;
+    }
+    invisibleList.add(href);
+    File file = File(invisibleFilePath);
+    file.writeAsStringSync(jsonEncode(invisibleList));
   }
 
   @override
@@ -359,6 +419,8 @@ class _MyHomePageState extends State<MyHomePage>
                         },
                       ),
                       const Text('Show invisible'),
+                      Text(', Exists: ${exists?.length ?? 0} items'),
+                      Text(', Loading: ${currentUrl ?? ''}'),
                     ],
                   ),
                 ],
@@ -376,12 +438,8 @@ class _MyHomePageState extends State<MyHomePage>
                             children: [
                               TextButton(
                                 onPressed: () {
-                                  invisibleList.add(item.href);
+                                  addInvisibleList(item.href);
                                   removeLinkElement(item.href);
-                                  File file = File(invisibleFilePath);
-                                  file.writeAsStringSync(
-                                    jsonEncode(invisibleList),
-                                  );
                                   setState(() {
                                     crawlItems.removeAt(index);
                                   });
