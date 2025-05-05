@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:crawler/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -54,7 +55,57 @@ class _MyHomePageState extends State<MyHomePage>
   List<String>? exists;
   String? currentUrl;
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: <String>[
+      'email', // Request the user's email address
+      'profile', // Request basic profile information
+      // Add other scopes your app needs, e.g., for Google Drive, Sheets, etc.
+    ],
+  );
+  Future<GoogleSignInAccount?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      return googleUser;
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error signing in with Google: $error');
+      }
+      return null;
+    }
+  }
+
+  Future<GoogleSignInAuthentication?> getGoogleAuth(
+    GoogleSignInAccount? googleUser,
+  ) async {
+    final GoogleSignInAuthentication? googleAuth =
+        await googleUser?.authentication;
+    return googleAuth;
+  }
+
+  GoogleSignInAccount? _currentUser;
+  String _authStatus = 'Not signed in.';
   void getDriveData() async {
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+      setState(() {
+        _currentUser = account;
+        _authStatus =
+            account != null
+                ? 'Signed in: ${account.displayName}'
+                : 'Not signed in.';
+      });
+    });
+    _googleSignIn
+        .signInSilently(); // Try to sign in silently if already authenticated
+    if (kDebugMode) {
+      print(_authStatus);
+      print(_currentUser);
+    }
+    GoogleSignInAccount? googleUser = await signInWithGoogle();
+    GoogleSignInAuthentication? googleAuth = await getGoogleAuth(googleUser);
+    if (kDebugMode) {
+      print('token is ${googleAuth?.accessToken}');
+    }
+
     final url = Uri.parse(
       'https://sheets.googleapis.com/v4/spreadsheets/13q0i2NrnZ2DS231dXK0TCGWwhHa2NVOkH6AHii7SlCU/values/A:A',
     );
