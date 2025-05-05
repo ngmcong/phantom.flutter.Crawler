@@ -53,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage>
   String? sourceSelected;
   List<String>? exists;
   String? currentUrl;
+  List<String>? filterTitle;
 
   var tokenFilePath = '/Users/phantom/Downloads/token.txt';
 
@@ -310,6 +311,26 @@ class _MyHomePageState extends State<MyHomePage>
                   for (var item in foundNames) {
                     exists!.remove(item);
                   }
+                }
+                filterTitle ??= [
+                  stringBase64Decode('bsOgbmcgZMOidQ=='),
+                  stringBase64Decode('YuG7kSBjaOG7k25n'),
+                ];
+                if (kDebugMode) {
+                  print(filterTitle);
+                }
+                for (var item in filterTitle!) {
+                  if (decodedItems.any(
+                        (e) => e.title.toLowerCase().contains(item),
+                      ) ==
+                      false) {
+                    continue;
+                  }
+                  invisibleList.add(
+                    decodedItems
+                        .firstWhere((e) => e.title.toLowerCase().contains(item))
+                        .href,
+                  );
                 }
                 for (var item in invisibleList) {
                   decodedItems.removeWhere((e) => e.href == item);
