@@ -291,6 +291,23 @@ class _MyHomePageState extends State<MyHomePage>
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 List<CrawlItem> decodedItems =
                     decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
+                if (sourceSelected == '1') {
+                  RegExp pattern = RegExp(r'(\w*-\d{3,})');
+                  for (var item in decodedItems) {
+                    if (pattern.hasMatch(item.title)) continue;
+                    var imgTitle = item.image.split('/').last;
+                    Match? match1 = pattern.firstMatch(imgTitle);
+                    if (match1 != null) {
+                      item.tag = match1.group(0);
+                      if (kDebugMode) {
+                        print(
+                          "First match in '$imgTitle': '${match1.group(0)}' at index ${match1.start}",
+                        );
+                      }
+                      // Output: First match in 'This string contains abc-123.': 'abc-123' at index 20
+                    }
+                  }
+                }
                 if (exists != null && exists!.isNotEmpty) {
                   List<String> foundNames = [];
                   for (var item in exists!) {
@@ -299,7 +316,8 @@ class _MyHomePageState extends State<MyHomePage>
                             .where(
                               (e) =>
                                   e.title == item ||
-                                  e.title.startsWith('[$item]'),
+                                  e.title.startsWith('[$item]') ||
+                                  e.tag == item,
                             )
                             .firstOrNull;
                     if (foundItem == null) {
@@ -341,23 +359,6 @@ class _MyHomePageState extends State<MyHomePage>
                       continue;
                     }
                     await removeLinkElement(item);
-                  }
-                }
-                if (sourceSelected == '1') {
-                  RegExp pattern = RegExp(r'(\w*-\d{3,})');
-                  for (var item in decodedItems) {
-                    if (pattern.hasMatch(item.title)) continue;
-                    var imgTitle = item.image.split('/').last;
-                    Match? match1 = pattern.firstMatch(imgTitle);
-                    if (match1 != null) {
-                      item.tag = match1.group(0);
-                      if (kDebugMode) {
-                        print(
-                          "First match in '$imgTitle': '${match1.group(0)}' at index ${match1.start}",
-                        );
-                      }
-                      // Output: First match in 'This string contains abc-123.': 'abc-123' at index 20
-                    }
                   }
                 }
                 if (decodedItems.isNotEmpty) {
