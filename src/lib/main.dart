@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:crawler/config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -55,36 +54,25 @@ class _MyHomePageState extends State<MyHomePage>
   List<String>? exists;
   String? currentUrl;
 
+  var tokenFilePath = '/Users/phantom/Downloads/token.txt';
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
       'email', // Request the user's email address
       'profile', // Request basic profile information
+      'https://www.googleapis.com/auth/drive',
+      'https://www.googleapis.com/auth/drive.file',
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/spreadsheets',
+      'https://www.googleapis.com/auth/spreadsheets.readonly',
       // Add other scopes your app needs, e.g., for Google Drive, Sheets, etc.
     ],
   );
-  Future<GoogleSignInAccount?> signInWithGoogle() async {
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      return googleUser;
-    } catch (error) {
-      if (kDebugMode) {
-        print('Error signing in with Google: $error');
-      }
-      return null;
-    }
-  }
-
-  Future<GoogleSignInAuthentication?> getGoogleAuth(
-    GoogleSignInAccount? googleUser,
-  ) async {
-    final GoogleSignInAuthentication? googleAuth =
-        await googleUser?.authentication;
-    return googleAuth;
-  }
 
   GoogleSignInAccount? _currentUser;
   String _authStatus = 'Not signed in.';
-  void getDriveData() async {
+  bool isCheckLogin = false;
+  void initDriveState() async {
     _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
       setState(() {
         _currentUser = account;
@@ -97,15 +85,34 @@ class _MyHomePageState extends State<MyHomePage>
     _googleSignIn
         .signInSilently(); // Try to sign in silently if already authenticated
     if (kDebugMode) {
-      print(_authStatus);
-      print(_currentUser);
+      print("_authStatus: $_authStatus");
+      print("_currentUser: $_currentUser");
     }
-    GoogleSignInAccount? googleUser = await signInWithGoogle();
-    GoogleSignInAuthentication? googleAuth = await getGoogleAuth(googleUser);
+    getDriveData();
+  }
+
+  void loginDrive() async {
+    GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
     if (kDebugMode) {
       print('token is ${googleAuth?.accessToken}');
     }
+    if (googleAuth?.accessToken?.isNotEmpty == true) {
+      File file = File(tokenFilePath);
+      file.writeAsStringSync(googleAuth!.accessToken!);
+      getDriveData(retry: true);
+    }
+  }
 
+  void getDriveData({bool retry = false}) async {
+    var ggSheetToken = '';
+    File file = File(tokenFilePath);
+    if (await file.exists()) {
+      ggSheetToken = await file.readAsString();
+    }
+    if (kDebugMode) {
+      print('ggSheetToken = $ggSheetToken');
+    }
     final url = Uri.parse(
       'https://sheets.googleapis.com/v4/spreadsheets/13q0i2NrnZ2DS231dXK0TCGWwhHa2NVOkH6AHii7SlCU/values/A:A',
     );
@@ -125,6 +132,9 @@ class _MyHomePageState extends State<MyHomePage>
     } else {
       if (kDebugMode) {
         print('failed to load data: ${response.statusCode}');
+      }
+      if (retry == false && response.statusCode == 401) {
+        loginDrive();
       }
     }
   }
@@ -180,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage>
     sourceSelected = '0';
 
     initStateAsync();
-    getDriveData();
+    initDriveState();
 
     _tabController = TabController(length: 2, vsync: this);
 

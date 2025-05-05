@@ -1,4 +1,4 @@
-package com.example.crawler
+package com.phantom.crawler
 
 import io.flutter.embedding.android.FlutterActivity
 
