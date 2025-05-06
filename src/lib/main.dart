@@ -339,17 +339,16 @@ class _MyHomePageState extends State<MyHomePage>
                   print(filterTitle);
                 }
                 for (var item in filterTitle!) {
-                  if (decodedItems.any(
-                        (e) => e.title.toLowerCase().contains(item),
-                      ) ==
-                      false) {
+                  var foundItems = decodedItems.where(
+                    (e) => e.title.toLowerCase().contains(item),
+                  );
+                  if (foundItems.isNotEmpty != true) {
                     continue;
                   }
-                  invisibleList.add(
-                    decodedItems
-                        .firstWhere((e) => e.title.toLowerCase().contains(item))
-                        .href,
-                  );
+                  for (var item in foundItems) {
+                    addInvisibleList(item.href);
+                    decodedItems.remove(item);
+                  }
                 }
                 for (var item in invisibleList) {
                   decodedItems.removeWhere((e) => e.href == item);
