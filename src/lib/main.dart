@@ -342,12 +342,16 @@ class _MyHomePageState extends State<MyHomePage>
                   var foundItems = decodedItems.where(
                     (e) => e.title.toLowerCase().contains(item),
                   );
-                  if (foundItems.isNotEmpty != true) {
+                  if (foundItems.isEmpty) {
                     continue;
+                  }
+                  if (kDebugMode) {
+                    print(
+                      'filtered ${foundItems.length}/${decodedItems.length}',
+                    );
                   }
                   for (var item in foundItems) {
                     addInvisibleList(item.href);
-                    decodedItems.remove(item);
                   }
                 }
                 for (var item in invisibleList) {
@@ -367,9 +371,9 @@ class _MyHomePageState extends State<MyHomePage>
                       if (crawlItems.any((e) => e.href == item.href)) continue;
                       crawlItems.add(item);
                     }
-                    page++;
                   });
                 }
+
                 //Call next page
                 if (sourceSelected == '0') {
                   nextUrl =
@@ -402,6 +406,9 @@ class _MyHomePageState extends State<MyHomePage>
                     nextUrl!.isNotEmpty &&
                     isManual == false &&
                     crawlItems.length <= 1000) {
+                  setState(() {
+                    page++;
+                  });
                   await loadRequest(Uri.parse(nextUrl!));
                 }
               },
