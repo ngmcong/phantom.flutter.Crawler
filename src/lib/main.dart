@@ -54,6 +54,7 @@ class _MyHomePageState extends State<MyHomePage>
   List<String>? exists;
   String? currentUrl;
   List<String>? filterTitle;
+  bool isShowImage = true;
 
   var tokenFilePath = '/Users/phantom/Downloads/token.txt';
 
@@ -521,6 +522,15 @@ class _MyHomePageState extends State<MyHomePage>
                       const Text('Show invisible'),
                       Text(', Exists: ${exists?.length ?? 0} items'),
                       Text(', Loading: ${currentUrl ?? ''}'),
+                      Checkbox(
+                        value: isShowImage,
+                        onChanged: (value) {
+                          setState(() {
+                            isShowImage = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Show image'),
                     ],
                   ),
                 ],
@@ -556,10 +566,16 @@ class _MyHomePageState extends State<MyHomePage>
                               ),
                             ],
                           ),
-                          SizedBox(
-                            width: 200,
-                            height: 200,
-                            child: Image.network(item.image, fit: BoxFit.cover),
+                          Visibility(
+                            visible: isShowImage,
+                            child: SizedBox(
+                              width: 200,
+                              height: 200,
+                              child: Image.network(
+                                item.image,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                           SizedBox(width: 60, child: Text(item.duration)),
                           GestureDetector(
