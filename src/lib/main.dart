@@ -188,6 +188,7 @@ class _MyHomePageState extends State<MyHomePage>
     sources ??= [
       stringBase64Decode("eGhzcG90LmNvbQ=="),
       stringBase64Decode('amF2aGR6LnBybw=='),
+      stringBase64Decode('cG9ybmh1Yi5jb20='),
     ];
     sourceSelected = '0';
 
@@ -255,7 +256,7 @@ class _MyHomePageState extends State<MyHomePage>
                 }
 
                 //Crawl data
-                String linksJson;
+                String linksJson = '';
                 if (sourceSelected == '0') {
                   linksJson =
                       await controller.runJavaScriptReturningResult('''
@@ -272,7 +273,7 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                           as String? ??
                       '[]';
-                } else {
+                } else if (sourceSelected == '1') {
                   linksJson =
                       await controller.runJavaScriptReturningResult('''
                     (function() {
@@ -288,6 +289,37 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                           as String? ??
                       '[]';
+                } else if (sourceSelected == '2') {
+                  //Click confirm age button if exists
+                  await controller.runJavaScript('''
+                    (function() {
+                      const button = document.querySelector('button[data-event=age_verification]');
+                      if (button) {
+                        button.click();
+                      } else {
+                        console.log('Button with the specified class not found.');
+                        // Optionally, you could send a message back to Flutter using a JavascriptChannel
+                      }
+                    })();
+                    ''');
+                  linksJson =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("li.pcVideoListItem.js-pop.videoblock");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").href,
+                        image: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("img").src,
+                        duration: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("var").innerText,
+                        title: item.querySelector("div.wrap").querySelector("div.thumbnail-info-wrapper").querySelector("span.title").querySelector("a").title,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+                          as String? ??
+                      '[]';
+                  if (kDebugMode) {
+                    print('linksJson = $linksJson');
+                  }
                 }
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 List<CrawlItem> decodedItems =
@@ -388,13 +420,26 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                           as String? ??
                       '';
-                } else {
+                } else if (sourceSelected == '1') {
                   nextUrl =
                       await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelectorAll("a.page-numbers");
                       if (element) {
                         return element[element.length - 1].href;
+                      }
+                      return '';
+                    })();
+                    ''')
+                          as String? ??
+                      '';
+                } else if (sourceSelected == '2') {
+                  nextUrl =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelectorAll("li.page_next");
+                      if (element) {
+                        return element[element.length - 1].querySelector("a").href;
                       }
                       return '';
                     })();
