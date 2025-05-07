@@ -56,7 +56,7 @@ class _MyHomePageState extends State<MyHomePage>
   List<String>? filterTitle;
   bool isShowImage = true;
   var tokenFilePath = '/Users/phantom/Downloads/token.txt';
-  var downloadedPath = "/Volumes/SSD/";
+  var downloadedPath = "/Volumes/SSD";
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -109,7 +109,13 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> appendExists() async {
     Directory directory = Directory(downloadedPath);
     if (await directory.exists()) {
+      if (kDebugMode) {
+        print('exist $downloadedPath');
+      }
       final List<FileSystemEntity> entities = await directory.list().toList();
+      if (kDebugMode) {
+        print('found ${entities.length} in $downloadedPath');
+      }
       for (final entity in entities) {
         if (entity is File) {
           String fileName = entity.uri.pathSegments.last;
