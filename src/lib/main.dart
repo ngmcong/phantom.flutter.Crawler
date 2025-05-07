@@ -116,13 +116,18 @@ class _MyHomePageState extends State<MyHomePage>
       if (kDebugMode) {
         print('found ${entities.length} in $downloadedPath');
       }
+      exists ??= [];
       for (final entity in entities) {
         if (entity is File) {
           String fileName = entity.uri.pathSegments.last;
           String entityName =
               fileName.split('.').first; // Extract name without extension
-          if (exists != null && !exists!.contains(entityName)) {
+          if (exists!.contains(entityName) || entityName.isEmpty) continue;
+          setState(() {
             exists!.add(entityName);
+          });
+          if (kDebugMode) {
+            print('added $entityName');
           }
         }
       }
