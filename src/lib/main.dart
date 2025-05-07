@@ -55,8 +55,8 @@ class _MyHomePageState extends State<MyHomePage>
   String? currentUrl;
   List<String>? filterTitle;
   bool isShowImage = true;
-
   var tokenFilePath = '/Users/phantom/Downloads/token.txt';
+  var downloadedPath = "/Volumes/SSD/";
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -106,6 +106,23 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<void> appendExists() async {
+    Directory directory = Directory(downloadedPath);
+    if (await directory.exists()) {
+      final List<FileSystemEntity> entities = await directory.list().toList();
+      for (final entity in entities) {
+        if (entity is File) {
+          String fileName = entity.uri.pathSegments.last;
+          String entityName =
+              fileName.split('.').first; // Extract name without extension
+          if (exists != null && !exists!.contains(entityName)) {
+            exists!.add(entityName);
+          }
+        }
+      }
+    }
+  }
+
   void getDriveData({bool retry = false}) async {
     var ggSheetToken = '';
     File file = File(tokenFilePath);
@@ -131,12 +148,15 @@ class _MyHomePageState extends State<MyHomePage>
                 .toList()
                 .cast<String>();
       });
+      await appendExists();
     } else {
       if (kDebugMode) {
         print('failed to load data: ${response.statusCode}');
       }
       if (retry == false && response.statusCode == 401) {
         loginDrive();
+      } else {
+        await appendExists();
       }
     }
   }
