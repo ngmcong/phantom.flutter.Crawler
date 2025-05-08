@@ -44,19 +44,21 @@ class _MyHomePageState extends State<MyHomePage>
   List<String> invisibleList = [];
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
-  String invisibleFilePath = '';
+  final String invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
   bool isManual = false;
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
+  final String sourcesPath = '/Users/phantom/Downloads/websources.txt';
   List<String>? sources;
   String? sourceSelected;
   List<String>? exists;
   String? currentUrl;
+  final String filterTitlePath = '/Users/phantom/Downloads/filtertitles.txt';
   List<String>? filterTitle;
   bool isShowImage = true;
-  var tokenFilePath = '/Users/phantom/Downloads/token.txt';
-  var downloadedPath = "/Volumes/SSD";
+  final String tokenFilePath = '/Users/phantom/Downloads/token.txt';
+  final String downloadedPath = "/Volumes/SSD";
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
@@ -71,34 +73,27 @@ class _MyHomePageState extends State<MyHomePage>
     ],
   );
 
-  GoogleSignInAccount? _currentUser;
-  String _authStatus = 'Not signed in.';
+  // GoogleSignInAccount? _currentUser;
+  // String _authStatus = 'Not signed in.';
   bool isCheckLogin = false;
   void initDriveState() async {
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-        _authStatus =
-            account != null
-                ? 'Signed in: ${account.displayName}'
-                : 'Not signed in.';
-      });
-    });
+    // _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+    //   setState(() {
+    //     _currentUser = account;
+    //     _authStatus =
+    //         account != null
+    //             ? 'Signed in: ${account.displayName}'
+    //             : 'Not signed in.';
+    //   });
+    // });
     _googleSignIn
         .signInSilently(); // Try to sign in silently if already authenticated
-    if (kDebugMode) {
-      print("_authStatus: $_authStatus");
-      print("_currentUser: $_currentUser");
-    }
     getDriveData();
   }
 
   void loginDrive() async {
     GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
     GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
-    if (kDebugMode) {
-      print('token is ${googleAuth?.accessToken}');
-    }
     if (googleAuth?.accessToken?.isNotEmpty == true) {
       File file = File(tokenFilePath);
       file.writeAsStringSync(googleAuth!.accessToken!);
@@ -109,13 +104,7 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> appendExists() async {
     Directory directory = Directory(downloadedPath);
     if (await directory.exists()) {
-      if (kDebugMode) {
-        print('exist $downloadedPath');
-      }
       final List<FileSystemEntity> entities = await directory.list().toList();
-      if (kDebugMode) {
-        print('found ${entities.length} in $downloadedPath');
-      }
       exists ??= [];
       for (final entity in entities) {
         if (entity is File) {
@@ -126,23 +115,13 @@ class _MyHomePageState extends State<MyHomePage>
           setState(() {
             exists!.add(entityName);
           });
-          if (kDebugMode) {
-            print('added $entityName');
-          }
         }
       }
     }
   }
 
   void getDriveData({bool retry = false}) async {
-    var ggSheetToken = '';
-    File file = File(tokenFilePath);
-    if (await file.exists()) {
-      ggSheetToken = await file.readAsString();
-    }
-    if (kDebugMode) {
-      print('ggSheetToken = $ggSheetToken');
-    }
+    var ggSheetToken = await readFileContent(tokenFilePath);
     final url = Uri.parse(
       'https://sheets.googleapis.com/v4/spreadsheets/13q0i2NrnZ2DS231dXK0TCGWwhHa2NVOkH6AHii7SlCU/values/A:A',
     );
@@ -172,18 +151,22 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  void initStateAsync() async {
-    invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
-    if (kDebugMode) {
-      print(invisibleFilePath);
-    }
-    File file = File(invisibleFilePath);
+  Future<String> readFileContent(String filePath) async {
+    File file = File(filePath);
     if (await file.exists()) {
-      var content = await file.readAsString();
-      dynamic decodedJson = jsonDecode(content);
-      if (decodedJson is List) {
-        invisibleList.addAll(decodedJson.cast<String>());
-      }
+      return await file.readAsString();
+    }
+    throw Exception('File $filePath not found');
+  }
+
+  void initStateAsync() async {
+    sources ??= (await readFileContent(sourcesPath)).split('\n');
+    sourceSelected = '0';
+
+    var content = await readFileContent(invisibleFilePath);
+    dynamic decodedJson = jsonDecode(content);
+    if (decodedJson is List) {
+      invisibleList.addAll(decodedJson.cast<String>());
     }
     setState(() {
       isLoading = false;
@@ -215,13 +198,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-
-    sources ??= [
-      stringBase64Decode("eGhzcG90LmNvbQ=="),
-      stringBase64Decode('amF2aGR6LnBybw=='),
-      stringBase64Decode('cG9ybmh1Yi5jb20='),
-    ];
-    sourceSelected = '0';
 
     initStateAsync();
     initDriveState();
@@ -348,9 +324,22 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
                           as String? ??
                       '[]';
-                  if (kDebugMode) {
-                    print('linksJson = $linksJson');
-                  }
+                } else if (sourceSelected == '3') {
+                  linksJson =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("article.item.movies");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("div.poster").querySelector("a").href,
+                        image: item.querySelector("div.poster").querySelector("img").src,
+                        duration: "",
+                        title: item.querySelector("div.data").querySelector("h3").querySelector("a").textContent,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+                          as String? ??
+                      '[]';
                 }
                 List<dynamic> decodedLinks = jsonDecode(linksJson);
                 List<CrawlItem> decodedItems =
@@ -363,12 +352,6 @@ class _MyHomePageState extends State<MyHomePage>
                     Match? match1 = pattern.firstMatch(imgTitle);
                     if (match1 != null) {
                       item.tag = match1.group(0);
-                      if (kDebugMode) {
-                        print(
-                          "First match in '$imgTitle': '${match1.group(0)}' at index ${match1.start}",
-                        );
-                      }
-                      // Output: First match in 'This string contains abc-123.': 'abc-123' at index 20
                     }
                   }
                 }
@@ -394,24 +377,15 @@ class _MyHomePageState extends State<MyHomePage>
                     exists!.remove(item);
                   }
                 }
-                filterTitle ??= [
-                  stringBase64Decode('bsOgbmcgZMOidQ=='),
-                  stringBase64Decode('YuG7kSBjaOG7k25n'),
-                ];
-                if (kDebugMode) {
-                  print(filterTitle);
-                }
+                filterTitle ??= (await readFileContent(
+                  filterTitlePath,
+                )).split('\n');
                 for (var item in filterTitle!) {
                   var foundItems = decodedItems.where(
                     (e) => e.title.toLowerCase().contains(item),
                   );
                   if (foundItems.isEmpty) {
                     continue;
-                  }
-                  if (kDebugMode) {
-                    print(
-                      'filtered ${foundItems.length}/${decodedItems.length}',
-                    );
                   }
                   for (var item in foundItems) {
                     addInvisibleList(item.href);
@@ -471,6 +445,20 @@ class _MyHomePageState extends State<MyHomePage>
                       const element = document.querySelectorAll("li.page_next");
                       if (element) {
                         return element[element.length - 1].querySelector("a").href;
+                      }
+                      return '';
+                    })();
+                    ''')
+                          as String? ??
+                      '';
+                } else if (sourceSelected == '3') {
+                  nextUrl =
+                      await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
+                      const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
+                      if (element) {
+                        return element[0].href;
                       }
                       return '';
                     })();
@@ -553,7 +541,7 @@ class _MyHomePageState extends State<MyHomePage>
                       DropdownButton(
                         value: sourceSelected,
                         items:
-                            sources!.indexed
+                            sources?.indexed
                                 .map(
                                   (e) => DropdownMenuItem(
                                     value: '${e.$1}',
@@ -562,9 +550,6 @@ class _MyHomePageState extends State<MyHomePage>
                                 )
                                 .toList(),
                         onChanged: (value) {
-                          if (kDebugMode) {
-                            print('selected: $value');
-                          }
                           setState(() {
                             sourceSelected = value;
                           });
