@@ -44,20 +44,20 @@ class _MyHomePageState extends State<MyHomePage>
   List<String> invisibleList = [];
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
-  final String invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
-  bool isManual = false;
+  final String invisibleFilePath = '/Volumes/SSD/invisible.txt';
+  bool isManual = true;
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
-  final String sourcesPath = '/Users/phantom/Downloads/websources.txt';
+  final String sourcesPath = '/Volumes/SSD/websources.txt';
   List<String>? sources;
   String? sourceSelected;
   List<String>? exists;
   String? currentUrl;
-  final String filterTitlePath = '/Users/phantom/Downloads/filtertitles.txt';
+  final String filterTitlePath = '/Volumes/SSD/filtertitles.txt';
   List<String>? filterTitle;
   bool isShowImage = true;
-  final String tokenFilePath = '/Users/phantom/Downloads/token.txt';
+  final String tokenFilePath = '/Volumes/SSD/token.txt';
   final String downloadedPath = "/Volumes/SSD";
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -196,6 +196,9 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> onNavigationDelegatePageFinished(String url) async {
+    if (kDebugMode) {
+      print('onNavigationDelegatePageFinished: $sourceSelected');
+    }
     if (sourceSelected == '0') {
       //Click confirm age button if exists
       await controller.runJavaScript('''
@@ -248,6 +251,9 @@ class _MyHomePageState extends State<MyHomePage>
                     ''');
     }
 
+    if (kDebugMode) {
+      print('Crawl data');
+    }
     //Crawl data
     String linksJson = '';
     if (sourceSelected == '0') {
@@ -354,10 +360,26 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
               as String? ??
           '[]';
+    } else if (sourceSelected == '5') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.card");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("center").querySelector("a").href,
+                        image: item.querySelector("center").querySelector("a").querySelector("picture").innerText,
+                        duration: "",
+                        title: item.querySelector("div.card-block").querySelector("a").querySelector("h1").innerText,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
     }
-    // if (kDebugMode) {
-    //   print('linksJson: $linksJson');
-    // }
+    if (kDebugMode) {
+      print('linksJson: $linksJson');
+    }
     List<dynamic> decodedLinks = jsonDecode(linksJson);
     List<CrawlItem> decodedItems =
         decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
@@ -481,7 +503,7 @@ class _MyHomePageState extends State<MyHomePage>
               as String? ??
           '';
     } else if (sourceSelected == '4') {
-      if (isManual == false && crawlItems.length <= 1000) {
+      if (isManual == false && crawlItems.length <= 500) {
         await controller.runJavaScript('''
           (function() {
             const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
@@ -496,7 +518,7 @@ class _MyHomePageState extends State<MyHomePage>
     if (nextUrl != null &&
         nextUrl!.isNotEmpty &&
         isManual == false &&
-        crawlItems.length <= 1000) {
+        crawlItems.length <= 500) {
       setState(() {
         page++;
       });
@@ -519,6 +541,9 @@ class _MyHomePageState extends State<MyHomePage>
           ..setNavigationDelegate(
             NavigationDelegate(
               onPageFinished: (String url) async {
+                if (kDebugMode) {
+                  print('onPageFinished: $url');
+                }
                 await onNavigationDelegatePageFinished(url);
               },
             ),
@@ -527,7 +552,12 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> loadRequest(Uri uri) async {
     nextUrl = null;
-    currentUrl = uri.toString();
+    setState(() {
+      currentUrl = uri.toString();
+    });
+    if (kDebugMode) {
+      print('loadRequest: $currentUrl');
+    }
     await controller.loadRequest(uri);
   }
 
