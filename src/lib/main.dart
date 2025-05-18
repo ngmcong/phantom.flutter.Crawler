@@ -195,24 +195,10 @@ class _MyHomePageState extends State<MyHomePage>
     return decodedString;
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    initStateAsync();
-    initDriveState();
-
-    _tabController = TabController(length: 2, vsync: this);
-
-    controller =
-        WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onPageFinished: (String url) async {
-                if (sourceSelected == '0') {
-                  //Click confirm age button if exists
-                  await controller.runJavaScript('''
+  Future<void> onNavigationDelegatePageFinished(String url) async {
+    if (sourceSelected == '0') {
+      //Click confirm age button if exists
+      await controller.runJavaScript('''
                     (function() {
                       const button = document.querySelector('button.root-64d24.size-big-64d24.color-brand-64d24.fullWidth-64d24');
                       if (button) {
@@ -223,8 +209,8 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                  //hide trending
-                  await controller.runJavaScript('''
+      //hide trending
+      await controller.runJavaScript('''
                   (function() {
                     const h2Elements = document.getElementsByTagName('h2');
                     for (let h2 of h2Elements) {
@@ -242,8 +228,8 @@ class _MyHomePageState extends State<MyHomePage>
                     return; // Return null if no matching element is found
                   })();
                   ''');
-                  //hide premium = goR-Rvpremium-n-overlay
-                  await controller.runJavaScript('''
+      //hide premium = goR-Rvpremium-n-overlay
+      await controller.runJavaScript('''
                     (function() {
                       const element = document.querySelector('div.goR-Rvpremium-n-overlay');
                       if (element) {
@@ -251,8 +237,8 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                  //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
-                  await controller.runJavaScript('''
+      //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
+      await controller.runJavaScript('''
                     (function() {
                       const element = document.querySelector('div.goR-Rvright-rectangle.goR-Rvright-rectangle--video.goR-Rv.goR-Rvno-ts-init');
                       if (element) {
@@ -260,13 +246,13 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                }
+    }
 
-                //Crawl data
-                String linksJson = '';
-                if (sourceSelected == '0') {
-                  linksJson =
-                      await controller.runJavaScriptReturningResult('''
+    //Crawl data
+    String linksJson = '';
+    if (sourceSelected == '0') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
                       const imageData = Array.from(images).map(item => ({
@@ -278,11 +264,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return JSON.stringify(imageData);
                     })();
                     ''')
-                          as String? ??
-                      '[]';
-                } else if (sourceSelected == '1') {
-                  linksJson =
-                      await controller.runJavaScriptReturningResult('''
+              as String? ??
+          '[]';
+    } else if (sourceSelected == '1') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
                       const datas = Array.from(dataArrayString).map(item => ({
@@ -294,11 +280,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return JSON.stringify(datas);
                     })();
                     ''')
-                          as String? ??
-                      '[]';
-                } else if (sourceSelected == '2') {
-                  //Click confirm age button if exists
-                  await controller.runJavaScript('''
+              as String? ??
+          '[]';
+    } else if (sourceSelected == '2') {
+      //Click confirm age button if exists
+      await controller.runJavaScript('''
                     (function() {
                       const button = document.querySelector('button[data-event=age_verification]');
                       if (button) {
@@ -309,8 +295,8 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
-                  linksJson =
-                      await controller.runJavaScriptReturningResult('''
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const dataArrayString = document.querySelectorAll("li.pcVideoListItem.js-pop.videoblock");
                       const datas = Array.from(dataArrayString).map(item => ({
@@ -322,11 +308,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return JSON.stringify(datas);
                     })();
                     ''')
-                          as String? ??
-                      '[]';
-                } else if (sourceSelected == '3') {
-                  linksJson =
-                      await controller.runJavaScriptReturningResult('''
+              as String? ??
+          '[]';
+    } else if (sourceSelected == '3') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const dataArrayString = document.querySelectorAll("article.item.movies");
                       const datas = Array.from(dataArrayString).map(item => ({
@@ -338,83 +324,112 @@ class _MyHomePageState extends State<MyHomePage>
                       return JSON.stringify(datas);
                     })();
                     ''')
-                          as String? ??
-                      '[]';
-                }
-                List<dynamic> decodedLinks = jsonDecode(linksJson);
-                List<CrawlItem> decodedItems =
-                    decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
-                if (sourceSelected == '1') {
-                  RegExp pattern = RegExp(r'(\w*-\d{3,})');
-                  for (var item in decodedItems) {
-                    if (pattern.hasMatch(item.title)) continue;
-                    var imgTitle = item.image.split('/').last;
-                    Match? match1 = pattern.firstMatch(imgTitle);
-                    if (match1 != null) {
-                      item.tag = match1.group(0);
-                    }
-                  }
-                }
-                if (exists != null && exists!.isNotEmpty) {
-                  List<String> foundNames = [];
-                  for (var item in exists!) {
-                    var foundItem =
-                        decodedItems
-                            .where(
-                              (e) =>
-                                  e.title == item ||
-                                  e.title.startsWith('[$item]') ||
-                                  e.tag == item,
-                            )
-                            .firstOrNull;
-                    if (foundItem == null) {
-                      continue;
-                    }
-                    addInvisibleList(foundItem.href);
-                    foundNames.add(item);
-                  }
-                  for (var item in foundNames) {
-                    exists!.remove(item);
-                  }
-                }
-                filterTitle ??= (await readFileContent(
-                  filterTitlePath,
-                )).split('\n');
-                for (var item in filterTitle!) {
-                  var foundItems = decodedItems.where(
-                    (e) => e.title.toLowerCase().contains(item),
-                  );
-                  if (foundItems.isEmpty) {
-                    continue;
-                  }
-                  for (var item in foundItems) {
-                    addInvisibleList(item.href);
-                  }
-                }
-                for (var item in invisibleList) {
-                  decodedItems.removeWhere((e) => e.href == item);
-                }
-                if (isManual && invisibleList.isNotEmpty) {
-                  for (var item in invisibleList) {
-                    if (decodedItems.any((e) => e.href == item) == false) {
-                      continue;
-                    }
-                    await removeLinkElement(item);
-                  }
-                }
-                if (decodedItems.isNotEmpty) {
-                  setState(() {
-                    for (var item in decodedItems) {
-                      if (crawlItems.any((e) => e.href == item.href)) continue;
-                      crawlItems.add(item);
-                    }
-                  });
-                }
+              as String? ??
+          '[]';
+    } else if (sourceSelected == '4') {
+      //Click confirm age button if exists
+      await controller.runJavaScript('''
+                    (function() {
+                      const button = document.querySelector('#okButton');
+                      if (button) {
+                        button.click();
+                      } else {
+                        console.log('Button with the specified class not found.');
+                        // Optionally, you could send a message back to Flutter using a JavascriptChannel
+                      }
+                    })();
+                    ''');
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.video-preview-screen.video-item.thumb-item");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("a").href,
+                        image: "https:" + item.querySelector("a").querySelector("ul.screenshots-list").querySelector("li.screenshot-item.active").getAttribute("data-src"),
+                        duration: item.querySelector("div.durations").querySelector("i").innerText,
+                        title: item.querySelector("p.inf").querySelector("a").title,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
+    }
+    // if (kDebugMode) {
+    //   print('linksJson: $linksJson');
+    // }
+    List<dynamic> decodedLinks = jsonDecode(linksJson);
+    List<CrawlItem> decodedItems =
+        decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
+    if (sourceSelected == '1') {
+      RegExp pattern = RegExp(r'(\w*-\d{3,})');
+      for (var item in decodedItems) {
+        if (pattern.hasMatch(item.title)) continue;
+        var imgTitle = item.image.split('/').last;
+        Match? match1 = pattern.firstMatch(imgTitle);
+        if (match1 != null) {
+          item.tag = match1.group(0);
+        }
+      }
+    }
+    if (exists != null && exists!.isNotEmpty) {
+      List<String> foundNames = [];
+      for (var item in exists!) {
+        var foundItem =
+            decodedItems
+                .where(
+                  (e) =>
+                      e.title == item ||
+                      e.title.startsWith('[$item]') ||
+                      e.tag == item,
+                )
+                .firstOrNull;
+        if (foundItem == null) {
+          continue;
+        }
+        addInvisibleList(foundItem.href);
+        foundNames.add(item);
+      }
+      for (var item in foundNames) {
+        exists!.remove(item);
+      }
+    }
+    filterTitle ??= (await readFileContent(filterTitlePath)).split('\n');
+    for (var item in filterTitle!) {
+      var foundItems = decodedItems.where(
+        (e) => e.title.toLowerCase().contains(item),
+      );
+      if (foundItems.isEmpty) {
+        continue;
+      }
+      for (var item in foundItems) {
+        addInvisibleList(item.href);
+      }
+    }
+    for (var item in invisibleList) {
+      decodedItems.removeWhere((e) => e.href == item);
+    }
+    if (isManual && invisibleList.isNotEmpty) {
+      for (var item in invisibleList) {
+        if (decodedItems.any((e) => e.href == item) == false) {
+          continue;
+        }
+        await removeLinkElement(item);
+      }
+    }
+    if (decodedItems.isNotEmpty) {
+      setState(() {
+        for (var item in decodedItems) {
+          if (crawlItems.any((e) => e.href == item.href)) continue;
+          crawlItems.add(item);
+        }
+      });
+    }
 
-                //Call next page
-                if (sourceSelected == '0') {
-                  nextUrl =
-                      await controller.runJavaScriptReturningResult('''
+    //Call next page
+    if (sourceSelected == '0') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
                       if (element) {
@@ -423,11 +438,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return '';
                     })();
                     ''')
-                          as String? ??
-                      '';
-                } else if (sourceSelected == '1') {
-                  nextUrl =
-                      await controller.runJavaScriptReturningResult('''
+              as String? ??
+          '';
+    } else if (sourceSelected == '1') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelectorAll("a.page-numbers");
                       if (element) {
@@ -436,11 +451,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return '';
                     })();
                     ''')
-                          as String? ??
-                      '';
-                } else if (sourceSelected == '2') {
-                  nextUrl =
-                      await controller.runJavaScriptReturningResult('''
+              as String? ??
+          '';
+    } else if (sourceSelected == '2') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelectorAll("li.page_next");
                       if (element) {
@@ -449,11 +464,11 @@ class _MyHomePageState extends State<MyHomePage>
                       return '';
                     })();
                     ''')
-                          as String? ??
-                      '';
-                } else if (sourceSelected == '3') {
-                  nextUrl =
-                      await controller.runJavaScriptReturningResult('''
+              as String? ??
+          '';
+    } else if (sourceSelected == '3') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
                     (function() {
                       const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
                       const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
@@ -463,18 +478,48 @@ class _MyHomePageState extends State<MyHomePage>
                       return '';
                     })();
                     ''')
-                          as String? ??
-                      '';
-                }
-                if (nextUrl != null &&
-                    nextUrl!.isNotEmpty &&
-                    isManual == false &&
-                    crawlItems.length <= 1000) {
-                  setState(() {
-                    page++;
-                  });
-                  await loadRequest(Uri.parse(nextUrl!));
-                }
+              as String? ??
+          '';
+    } else if (sourceSelected == '4') {
+      if (isManual == false && crawlItems.length <= 1000) {
+        await controller.runJavaScript('''
+          (function() {
+            const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
+            if (element) {
+              return element.click();
+            }
+          })();
+          ''');
+        await onNavigationDelegatePageFinished(url);
+      }
+    }
+    if (nextUrl != null &&
+        nextUrl!.isNotEmpty &&
+        isManual == false &&
+        crawlItems.length <= 1000) {
+      setState(() {
+        page++;
+      });
+      await loadRequest(Uri.parse(nextUrl!));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    initStateAsync();
+    initDriveState();
+
+    _tabController = TabController(length: 2, vsync: this);
+
+    controller =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onPageFinished: (String url) async {
+                await onNavigationDelegatePageFinished(url);
               },
             ),
           );
