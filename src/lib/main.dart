@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
   final String invisibleFilePath = '/Volumes/SSD/invisible.txt';
-  bool isManual = true;
+  bool isManual = false;
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
