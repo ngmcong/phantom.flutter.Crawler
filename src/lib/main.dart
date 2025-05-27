@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
   final String invisibleFilePath = '/Volumes/SSD/invisible.txt';
-  bool isManual = false;
+  bool isManual = false; // Set to true if you want to use manual mode
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
@@ -367,7 +367,7 @@ class _MyHomePageState extends State<MyHomePage>
                       const dataArrayString = document.querySelectorAll("div.card");
                       const datas = Array.from(dataArrayString).map(item => ({
                         href: item.querySelector("center").querySelector("a").href,
-                        image: item.querySelector("center").querySelector("a").querySelector("picture").innerText,
+                        image: item.querySelector("center").querySelector("a").querySelectorAll("picture")[0].querySelectorAll("source")[0].getAttribute("data-srcset"),
                         duration: "",
                         title: item.querySelector("div.card-block").querySelector("a").querySelector("h1").innerText,
                       }));
@@ -449,6 +449,9 @@ class _MyHomePageState extends State<MyHomePage>
     }
 
     //Call next page
+    if (kDebugMode) {
+      print('Call next page');
+    }
     if (sourceSelected == '0') {
       nextUrl =
           await controller.runJavaScriptReturningResult('''
@@ -514,6 +517,20 @@ class _MyHomePageState extends State<MyHomePage>
           ''');
         await onNavigationDelegatePageFinished(url);
       }
+    } else if (sourceSelected == '5') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const nextIndex = parseInt(document.querySelector("#page_right_side").querySelectorAll("span.current")[0].innerText) + 1;
+                      const element = Array.from(document.querySelector("#page_right_side").querySelectorAll("a")).find(link => link.innerText == nextIndex);
+                      if (element) {
+                        return element.href;
+                      }
+                      return "";
+                    })();
+                    ''')
+              as String? ??
+          '';
     }
     if (nextUrl != null &&
         nextUrl!.isNotEmpty &&
@@ -546,6 +563,14 @@ class _MyHomePageState extends State<MyHomePage>
                 }
                 await onNavigationDelegatePageFinished(url);
               },
+              onProgress: (progress) async {
+                if (kDebugMode) {
+                  print("onProgress: $progress");
+                }
+                // if (currentUrl?.isNotEmpty == true) {
+                //   await onNavigationDelegatePageFinished(currentUrl!);
+                // }
+              },
             ),
           );
   }
@@ -558,6 +583,9 @@ class _MyHomePageState extends State<MyHomePage>
     if (kDebugMode) {
       print('loadRequest: $currentUrl');
     }
+    // if (sourceSelected == '5') {
+    //   await controller.clearCache();
+    // }
     await controller.loadRequest(uri);
   }
 
