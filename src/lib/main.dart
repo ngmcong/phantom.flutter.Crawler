@@ -392,6 +392,22 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
               as String? ??
           '[]';
+    } else if (sourceSelected == '7') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.mb.hdy");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("div.mbcontent").querySelector("a").href,
+                        image: item.querySelector("div.mbcontent").querySelector("img").src,
+                        duration: item.querySelector("div.mbunder").querySelector("p.mbstats").querySelector("span.mbtim").innerHTML,
+                        title: item.querySelector("div.mbunder").querySelector("p.mbtit").querySelector("a").innerHTML,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
     }
     if (kDebugMode) {
       print('linksJson: $linksJson');
@@ -552,6 +568,19 @@ class _MyHomePageState extends State<MyHomePage>
           await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelector("div.pagination-pages").querySelector("a[aria-label='Next page']");
+                      if (element) {
+                        return element.href;
+                      }
+                      return '';
+                    })();
+                    ''')
+              as String? ??
+          '';
+    } else if (sourceSelected == '7') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
                       if (element) {
                         return element.href;
                       }
