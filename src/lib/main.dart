@@ -376,6 +376,22 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
               as String? ??
           '[]';
+    } else if (sourceSelected == '6') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.card.sub.group");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("a.item-link").href,
+                        image: item.querySelector("a.item-link").querySelector("img").src,
+                        duration: item.querySelector("a.item-link").querySelector("span.badge.float-right").innerText,
+                        title: item.querySelector("div.item-footer").querySelector("a.item-title").title,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
     }
     if (kDebugMode) {
       print('linksJson: $linksJson');
@@ -527,6 +543,19 @@ class _MyHomePageState extends State<MyHomePage>
                         return element.href;
                       }
                       return "";
+                    })();
+                    ''')
+              as String? ??
+          '';
+    } else if (sourceSelected == '6') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelector("div.pagination-pages").querySelector("a[aria-label='Next page']");
+                      if (element) {
+                        return element.href;
+                      }
+                      return '';
                     })();
                     ''')
               as String? ??
