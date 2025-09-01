@@ -759,6 +759,15 @@ class _MyHomePageState extends State<MyHomePage>
                         },
                       ),
                       const Text('Show image'),
+                      Checkbox(
+                        value: isManual,
+                        onChanged: (value) {
+                          setState(() {
+                            isManual = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Manual'),
                     ],
                   ),
                 ],
