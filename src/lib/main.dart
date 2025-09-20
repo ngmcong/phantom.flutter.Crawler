@@ -417,7 +417,7 @@ class _MyHomePageState extends State<MyHomePage>
                         href: item.querySelector("div.thumb-under").querySelector("a").href,
                         image: item.querySelector("div.thumb-inside").querySelector("img").src,
                         duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
-                        title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").innerHTML,
+                        title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
                       }));
                       return JSON.stringify(datas);
                     })();
