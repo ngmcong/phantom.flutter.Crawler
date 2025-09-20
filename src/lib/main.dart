@@ -408,6 +408,22 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
               as String? ??
           '[]';
+    } else if (sourceSelected == '8') {
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.frame-block.thumb-block");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("div.thumb-under").querySelector("a").href,
+                        image: item.querySelector("div.thumb-inside").querySelector("img").src,
+                        duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
+                        title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").innerHTML,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
     }
     if (kDebugMode) {
       print('linksJson: $linksJson');
@@ -581,6 +597,19 @@ class _MyHomePageState extends State<MyHomePage>
           await controller.runJavaScriptReturningResult('''
                     (function() {
                       const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
+                      if (element) {
+                        return element.href;
+                      }
+                      return '';
+                    })();
+                    ''')
+              as String? ??
+          '';
+    } else if (sourceSelected == '8') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelector("div.pagination ").querySelector("a.next-page");
                       if (element) {
                         return element.href;
                       }
