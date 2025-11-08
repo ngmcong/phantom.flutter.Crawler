@@ -249,10 +249,35 @@ class _MyHomePageState extends State<MyHomePage>
                       }
                     })();
                     ''');
+    } else if (sourceSelected == '9') {
+      //hide got-it-cc3f8
+      await controller.runJavaScript('''
+        (function() {
+          const button = document.querySelector('a.got-it-cc3f8');
+          if (button) {
+            button.click();
+          } else {
+            console.log('Button with the specified class not found.');
+            // Optionally, you could send a message back to Flutter using a JavascriptChannel
+          }
+        })();
+        ''');
+      //confirm parental-control-confirm-button
+      await controller.runJavaScript('''
+        (function() {
+          const button = document.querySelector('button[data-role="parental-control-confirm-button"]');
+          if (button) {
+            button.click();
+          } else {
+            console.log('Button with the specified class not found.');
+            // Optionally, you could send a message back to Flutter using a JavascriptChannel
+          }
+        })();
+        ''');
     }
 
     if (kDebugMode) {
-      print('Crawl data');
+      print('Crawl data: $sourceSelected');
     }
     //Crawl data
     String linksJson = '';
@@ -418,6 +443,31 @@ class _MyHomePageState extends State<MyHomePage>
                         image: item.querySelector("div.thumb-inside").querySelector("img").src,
                         duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
                         title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
+                      }));
+                      return JSON.stringify(datas);
+                    })();
+                    ''')
+              as String? ??
+          '[]';
+    } else if (sourceSelected == '9') {
+      // var body =
+      //     await controller.runJavaScriptReturningResult(
+      //           'document.body.innerHTML',
+      //         )
+      //         as String? ??
+      //     '[]';
+      // if (kDebugMode) {
+      //   print('body: $body');
+      // }
+      linksJson =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const dataArrayString = document.querySelectorAll("div.thumb-list__item");
+                      const datas = Array.from(dataArrayString).map(item => ({
+                        href: item.querySelector("div.video-thumb-info")?.querySelector("a")?.href ?? "NotFound",
+                        image: item.querySelector("a.video-thumb__image-container")?.querySelector("img")?.src ?? "NotFound",
+                        duration: "",
+                        title: item.querySelector("div.video-thumb-info")?.querySelector("a")?.textContent ?? "NotFound",
                       }));
                       return JSON.stringify(datas);
                     })();
@@ -618,6 +668,19 @@ class _MyHomePageState extends State<MyHomePage>
                     ''')
               as String? ??
           '';
+    } else if (sourceSelected == '9') {
+      nextUrl =
+          await controller.runJavaScriptReturningResult('''
+                    (function() {
+                      const element = document.querySelector("a.prev-next-list-link.prev-next-list-link--next");
+                      if (element) {
+                        return element.href;
+                      }
+                      return '';
+                    })();
+                    ''')
+              as String? ??
+          '';
     }
     if (nextUrl != null &&
         nextUrl!.isNotEmpty &&
@@ -627,6 +690,10 @@ class _MyHomePageState extends State<MyHomePage>
         page++;
       });
       await loadRequest(Uri.parse(nextUrl!));
+    } else {
+      if (kDebugMode) {
+        print('No next page or manual mode enabled or reached item limit');
+      }
     }
   }
 
