@@ -9,6 +9,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Tăng giới hạn cache lên 200MB và 200 ảnh
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 200 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 200;
   runApp(const MyApp());
 }
 
@@ -36,6 +40,14 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class SourcePath {
+  final String name;
+  final String crawlJquery;
+  final String nextPageJquery;
+
+  SourcePath(this.name, this.crawlJquery, this.nextPageJquery);
+}
+
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late final WebViewController controller;
@@ -44,20 +56,20 @@ class _MyHomePageState extends State<MyHomePage>
   List<String> invisibleList = [];
   bool isLoading = true;
   final TextEditingController txtUrl = TextEditingController();
-  final String invisibleFilePath = '/Volumes/SSD/invisible.txt';
+  final String invisibleFilePath = '/Users/phantom/Downloads/invisible.txt';
   bool isManual = false; // Set to true if you want to use manual mode
   String? nextUrl;
   int page = 0;
   bool isShowInvisible = false;
-  final String sourcesPath = '/Volumes/SSD/websources.txt';
+  final String sourcesPath = '/Users/phantom/Downloads/websources.txt';
   List<String>? sources;
   String? sourceSelected;
   List<String>? exists;
   String? currentUrl;
-  final String filterTitlePath = '/Volumes/SSD/filtertitles.txt';
+  final String filterTitlePath = '/Users/phantom/Downloads/filtertitles.txt';
   List<String>? filterTitle;
   bool isShowImage = true;
-  final String tokenFilePath = '/Volumes/SSD/token.txt';
+  final String tokenFilePath = '/Users/phantom/Downloads/token.txt';
   final String downloadedPath = "/Volumes/SSD";
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -159,8 +171,42 @@ class _MyHomePageState extends State<MyHomePage>
     throw Exception('File $filePath not found');
   }
 
+  final List<SourcePath> _sourcePaths = [
+    SourcePath(
+      'eporner.com',
+      '''
+        (function() {
+          const images = document.querySelectorAll("div.mb.hdy");
+          const imageData = Array.from(images).map(item => ({
+            href: item.querySelector("div.mbcontent").querySelector("a").href,
+            image: item.querySelector("div.mbcontent").querySelector("a").querySelector("img").src,
+            duration: item.querySelector("div.mbunder").querySelector("p.mbstats").querySelector("span.mbtim").textContent,
+            title: item.querySelector("div.mbunder").querySelector("p.mbtit").textContent,
+          }));
+          return JSON.stringify(imageData);
+        })();
+      ''',
+      '''
+        (function() {
+          const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
+          if (element) {
+            return element.href;
+          }
+          return '';
+        })();
+      ''',
+    ),
+  ];
+
   void initStateAsync() async {
-    sources ??= (await readFileContent(sourcesPath)).split('\n');
+    try {
+      sources ??= (await readFileContent(sourcesPath)).split('\n');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error reading sources file: $e');
+      }
+      sources = _sourcePaths.map((e) => e.name).toList();
+    }
     sourceSelected = '0';
 
     var content = await readFileContent(invisibleFilePath);
@@ -283,20 +329,26 @@ class _MyHomePageState extends State<MyHomePage>
     String linksJson = '';
     if (sourceSelected == '0') {
       linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
-                      const imageData = Array.from(images).map(item => ({
-                        href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
-                        image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
-                        duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
-                        title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
-                      }));
-                      return JSON.stringify(imageData);
-                    })();
-                    ''')
+          await controller.runJavaScriptReturningResult(
+                _sourcePaths[int.parse(sourceSelected!)].crawlJquery,
+              )
               as String? ??
           '[]';
+      // linksJson =
+      //     await controller.runJavaScriptReturningResult('''
+      //               (function() {
+      //                 const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
+      //                 const imageData = Array.from(images).map(item => ({
+      //                   href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
+      //                   image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
+      //                   duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
+      //                   title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
+      //                 }));
+      //                 return JSON.stringify(imageData);
+      //               })();
+      //               ''')
+      //         as String? ??
+      //     '[]';
     } else if (sourceSelected == '1') {
       linksJson =
           await controller.runJavaScriptReturningResult('''
@@ -514,16 +566,22 @@ class _MyHomePageState extends State<MyHomePage>
         exists!.remove(item);
       }
     }
-    filterTitle ??= (await readFileContent(filterTitlePath)).split('\n');
-    for (var item in filterTitle!) {
-      var foundItems = decodedItems.where(
-        (e) => e.title.toLowerCase().contains(item),
-      );
-      if (foundItems.isEmpty) {
-        continue;
+    try {
+      filterTitle ??= (await readFileContent(filterTitlePath)).split('\n');
+      for (var item in filterTitle!) {
+        var foundItems = decodedItems.where(
+          (e) => e.title.toLowerCase().contains(item),
+        );
+        if (foundItems.isEmpty) {
+          continue;
+        }
+        for (var item in foundItems) {
+          addInvisibleList(item.href);
+        }
       }
-      for (var item in foundItems) {
-        addInvisibleList(item.href);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error reading filter title file: $e');
       }
     }
     for (var item in invisibleList) {
@@ -552,17 +610,23 @@ class _MyHomePageState extends State<MyHomePage>
     }
     if (sourceSelected == '0') {
       nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
-                      if (element) {
-                        return element.getAttribute("href");
-                      }
-                      return '';
-                    })();
-                    ''')
+          await controller.runJavaScriptReturningResult(
+                _sourcePaths[int.parse(sourceSelected!)].nextPageJquery,
+              )
               as String? ??
           '';
+      // nextUrl =
+      //     await controller.runJavaScriptReturningResult('''
+      //               (function() {
+      //                 const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
+      //                 if (element) {
+      //                   return element.getAttribute("href");
+      //                 }
+      //                 return '';
+      //               })();
+      //               ''')
+      //         as String? ??
+      //     '';
     } else if (sourceSelected == '1') {
       nextUrl =
           await controller.runJavaScriptReturningResult('''
@@ -758,6 +822,39 @@ class _MyHomePageState extends State<MyHomePage>
     file.writeAsStringSync(jsonEncode(invisibleList));
   }
 
+  Widget buildImage(String imageStr) {
+    // 1. Kiểm tra nếu là ảnh Base64
+    if (imageStr.startsWith('data:image')) {
+      // Tách bỏ phần header "data:image/gif;base64," để lấy nội dung base64 thực sự
+      final base64String = imageStr.split(',').last;
+      if (kDebugMode) {
+        print(
+          'Decoding Base64 image: {base64String}, length: ${base64String.length}',
+        );
+      }
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        cacheWidth: 300,
+        gaplessPlayback: true,
+      );
+    }
+
+    // 2. Nếu là URL bình thường
+    return Image.network(
+      imageStr,
+      fit: BoxFit.cover,
+      headers: {
+        'User-Agent': 'Mozilla/5.0...',
+        'Accept':
+            'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+      // Luôn nên có errorBuilder để tránh crash khi link ảnh chết
+      errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image),
+      gaplessPlayback: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -904,9 +1001,8 @@ class _MyHomePageState extends State<MyHomePage>
                             child: SizedBox(
                               width: 200,
                               height: 200,
-                              child: Image.network(
-                                item.image,
-                                fit: BoxFit.cover,
+                              child: RepaintBoundary(
+                                child: buildImage(item.image),
                               ),
                             ),
                           ),
