@@ -300,6 +300,80 @@ class _MyHomePageState extends State<MyHomePage>
       })();
       ''',
     ),
+    SourcePath(
+      name: 'xhamster.com',
+      crawlJquery: '''
+      (function() {
+        function wait(ms) {
+          const start = Date.now();
+          while (Date.now() - start < ms) {}
+        }
+
+        function waitForData(selector, maxTry) {
+          for (let i = 0; i < maxTry; i++) {
+            const items = document.querySelectorAll(selector);
+            if (items.length > 0) {
+              // Lấy item đầu tiên để kiểm tra
+              const firstItem = items[0];
+              // Tìm thẻ <a>, sau đó tìm <img> bên trong <a>
+              const linkInItem = firstItem.querySelector("a");
+              const imgInLink = linkInItem ? linkInItem.querySelector("img") : null;
+
+              // Điều kiện: Có ảnh và src phải là link thật (http...)
+              if (imgInLink && imgInLink.src && imgInLink.src.startsWith('http')) {
+                return true;
+              }
+            }
+            // Sync wait 200ms
+            const start = Date.now();
+            while (Date.now() - start < 200) {}
+          }
+          return false;
+        }
+
+        // Đợi cho đến khi các item video xuất hiện và có ảnh thật
+        waitForData("div.thumb-list__item.video-thumb", 50);
+
+        const items = document.querySelectorAll(
+          "div.thumb-list__item.video-thumb.video-thumb--type-video"
+        );
+
+        const data = [];
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const link = item.querySelector("a");
+          let img = link ? link.querySelector("img") : null;
+          // let retry = 0;
+          // while (!img && retry < 5) {
+          //   wait(200); 
+          //   img = link ? link.querySelector("img") : null;
+          //   retry++;
+          // }
+          const titleEl = item.querySelector("a.video-thumb-info__name");
+
+          data.push({
+            href: link ? link.href : "",
+            image: img ? img.src : "",
+            duration: "",
+            title: titleEl
+              ? titleEl.textContent.trim()
+              : (link ? link.getAttribute("aria-label") : "")
+          });
+        }
+        return JSON.stringify(data);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
+        if (element) {
+          return element.getAttribute("href");
+        }
+        return '';
+      })();
+      ''',
+    ),
   ];
 
   void initStateAsync() async {
@@ -353,6 +427,13 @@ class _MyHomePageState extends State<MyHomePage>
     if (selectedSource.confirmJquery != null) {
       await controller.runJavaScript(selectedSource.confirmJquery!);
     }
+    // var body =
+    //     await controller.runJavaScriptReturningResult('document.body.innerHTML')
+    //         as String? ??
+    //     '[]';
+    // if (kDebugMode) {
+    //   print('body: $body');
+    // }
     // if (sourceSelected == '0') {
     //   //Click confirm age button if exists
     //   await controller.runJavaScript('''
