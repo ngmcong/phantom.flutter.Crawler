@@ -375,10 +375,11 @@ class _MyHomePageState extends State<MyHomePage>
       print('Crawl data: $sourceSelected');
     }
     //Crawl data
+    var selectedSource = _sourcePaths[int.parse(sourceSelected!)];
     String linksJson = '';
     linksJson =
         await controller.runJavaScriptReturningResult(
-              _sourcePaths[int.parse(sourceSelected!)].crawlJquery,
+              selectedSource.crawlJquery,
             )
             as String? ??
         '[]';
@@ -582,7 +583,7 @@ class _MyHomePageState extends State<MyHomePage>
     List<dynamic> decodedLinks = jsonDecode(linksJson);
     List<CrawlItem> decodedItems =
         decodedLinks.map((e) => CrawlItem.fromJson(e)).toList();
-    if (sourceSelected == '1') {
+    if (selectedSource.name == 'javhd.pro') {
       RegExp pattern = RegExp(r'(\w*-\d{3,})');
       for (var item in decodedItems) {
         if (pattern.hasMatch(item.title)) continue;
@@ -659,7 +660,7 @@ class _MyHomePageState extends State<MyHomePage>
     }
     nextUrl =
         await controller.runJavaScriptReturningResult(
-              _sourcePaths[int.parse(sourceSelected!)].nextPageJquery,
+              selectedSource.nextPageJquery,
             )
             as String? ??
         '';
