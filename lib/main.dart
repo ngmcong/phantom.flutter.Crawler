@@ -44,8 +44,14 @@ class SourcePath {
   final String name;
   final String crawlJquery;
   final String nextPageJquery;
+  String? confirmJquery;
 
-  SourcePath(this.name, this.crawlJquery, this.nextPageJquery);
+  SourcePath({
+    required this.name,
+    required this.crawlJquery,
+    required this.nextPageJquery,
+    this.confirmJquery,
+  });
 }
 
 class _MyHomePageState extends State<MyHomePage>
@@ -173,8 +179,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   final List<SourcePath> _sourcePaths = [
     SourcePath(
-      'eporner.com',
-      '''
+      name: 'eporner.com',
+      crawlJquery: '''
         (function() {
           const images = document.querySelectorAll("div.mb.hdy");
           const imageData = Array.from(images).map(item => ({
@@ -186,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage>
           return JSON.stringify(imageData);
         })();
       ''',
-      '''
+      nextPageJquery: '''
         (function() {
           const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
           if (element) {
@@ -197,8 +203,8 @@ class _MyHomePageState extends State<MyHomePage>
       ''',
     ),
     SourcePath(
-      'krx18.com',
-      '''
+      name: 'krx18.com',
+      crawlJquery: '''
       (function() {
         const dataArrayString = document.querySelectorAll("article.item.movies");
         const datas = Array.from(dataArrayString).map(item => ({
@@ -210,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage>
         return JSON.stringify(datas);
       })();
       ''',
-      '''
+      nextPageJquery: '''
       (function() {
         const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
         const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
@@ -222,8 +228,8 @@ class _MyHomePageState extends State<MyHomePage>
       ''',
     ),
     SourcePath(
-      'javhd.pro',
-      '''
+      name: 'javhd.pro',
+      crawlJquery: '''
       (function() {
         const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
         const datas = Array.from(dataArrayString).map(item => ({
@@ -235,13 +241,62 @@ class _MyHomePageState extends State<MyHomePage>
         return JSON.stringify(datas);
       })();
       ''',
-      '''
+      nextPageJquery: '''
       (function() {
         const element = document.querySelectorAll("a.page-numbers");
         if (element) {
           return element[element.length - 1].href;
         }
         return '';
+      })();
+      ''',
+    ),
+    SourcePath(
+      name: 'avtoday.io',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("div.thumbnail");
+        const datas = Array.from(dataArrayString).map(item => {
+          const videoEl = item.querySelector("div.video-card").querySelector("a").querySelector("video");
+          let imageUrl = "";
+          if (videoEl) {
+            const style = videoEl.style.background;
+            imageUrl = "https://avtoday.io/" + style.slice(style.indexOf('url("') + 5, style.lastIndexOf('")'));
+          }
+          return {
+            href: item.querySelector("div.video-card").querySelector("a").href,
+            image: imageUrl,
+            duration: "",
+            title: item.querySelector("div.video-title").querySelector("a").textContent,
+          };
+        });
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const elements = document.querySelectorAll("ul.pagination li.page-item a.page-link");
+        if (elements.length > 0) {
+          // Lấy phần tử cuối cùng trong danh sách (thường là nút Next hoặc trang cuối)
+          const lastItem = elements[elements.length - 1];
+          if (lastItem.classList.contains('active')) {
+            return '';
+          }
+          // Trả về href tuyệt đối
+          return lastItem.href;
+        }
+        return '';
+      })();
+      ''',
+      confirmJquery: '''
+      (function() {
+        const button = document.querySelector('button.swal2-confirm.swal2-styled');
+        if (button) {
+          button.click();
+        } else {
+          console.log('Button with the specified class not found.');
+          // Optionally, you could send a message back to Flutter using a JavascriptChannel
+        }
       })();
       ''',
     ),
@@ -294,88 +349,90 @@ class _MyHomePageState extends State<MyHomePage>
     if (kDebugMode) {
       print('onNavigationDelegatePageFinished: $sourceSelected');
     }
-    if (sourceSelected == '0') {
-      //Click confirm age button if exists
-      await controller.runJavaScript('''
-                    (function() {
-                      const button = document.querySelector('button.root-64d24.size-big-64d24.color-brand-64d24.fullWidth-64d24');
-                      if (button) {
-                        button.click();
-                      } else {
-                        console.log('Button with the specified class not found.');
-                        // Optionally, you could send a message back to Flutter using a JavascriptChannel
-                      }
-                    })();
-                    ''');
-      //hide trending
-      await controller.runJavaScript('''
-                  (function() {
-                    const h2Elements = document.getElementsByTagName('h2');
-                    for (let h2 of h2Elements) {
-                      if (h2.innerText.trim() === "Trending 3d Hentai Moments") {
-                        let parent = h2.parentNode;
-                        while (parent) {
-                          if (parent.getAttribute("data-block") === "moments") {
-                            parent.remove();
-                          }
-                          parent = parent.parentNode;
-                        }
-                        return; // Return the innerText if found
-                      }
-                    }
-                    return; // Return null if no matching element is found
-                  })();
-                  ''');
-      //hide premium = goR-Rvpremium-n-overlay
-      await controller.runJavaScript('''
-                    (function() {
-                      const element = document.querySelector('div.goR-Rvpremium-n-overlay');
-                      if (element) {
-                        element.remove();
-                      }
-                    })();
-                    ''');
-      //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
-      await controller.runJavaScript('''
-                    (function() {
-                      const element = document.querySelector('div.goR-Rvright-rectangle.goR-Rvright-rectangle--video.goR-Rv.goR-Rvno-ts-init');
-                      if (element) {
-                        element.remove();
-                      }
-                    })();
-                    ''');
-    } else if (sourceSelected == '9') {
-      //hide got-it-cc3f8
-      await controller.runJavaScript('''
-        (function() {
-          const button = document.querySelector('a.got-it-cc3f8');
-          if (button) {
-            button.click();
-          } else {
-            console.log('Button with the specified class not found.');
-            // Optionally, you could send a message back to Flutter using a JavascriptChannel
-          }
-        })();
-        ''');
-      //confirm parental-control-confirm-button
-      await controller.runJavaScript('''
-        (function() {
-          const button = document.querySelector('button[data-role="parental-control-confirm-button"]');
-          if (button) {
-            button.click();
-          } else {
-            console.log('Button with the specified class not found.');
-            // Optionally, you could send a message back to Flutter using a JavascriptChannel
-          }
-        })();
-        ''');
+    var selectedSource = _sourcePaths[int.parse(sourceSelected!)];
+    if (selectedSource.confirmJquery != null) {
+      await controller.runJavaScript(selectedSource.confirmJquery!);
     }
-
+    // if (sourceSelected == '0') {
+    //   //Click confirm age button if exists
+    //   await controller.runJavaScript('''
+    //                 (function() {
+    //                   const button = document.querySelector('button.root-64d24.size-big-64d24.color-brand-64d24.fullWidth-64d24');
+    //                   if (button) {
+    //                     button.click();
+    //                   } else {
+    //                     console.log('Button with the specified class not found.');
+    //                     // Optionally, you could send a message back to Flutter using a JavascriptChannel
+    //                   }
+    //                 })();
+    //                 ''');
+    //   //hide trending
+    //   await controller.runJavaScript('''
+    //               (function() {
+    //                 const h2Elements = document.getElementsByTagName('h2');
+    //                 for (let h2 of h2Elements) {
+    //                   if (h2.innerText.trim() === "Trending 3d Hentai Moments") {
+    //                     let parent = h2.parentNode;
+    //                     while (parent) {
+    //                       if (parent.getAttribute("data-block") === "moments") {
+    //                         parent.remove();
+    //                       }
+    //                       parent = parent.parentNode;
+    //                     }
+    //                     return; // Return the innerText if found
+    //                   }
+    //                 }
+    //                 return; // Return null if no matching element is found
+    //               })();
+    //               ''');
+    //   //hide premium = goR-Rvpremium-n-overlay
+    //   await controller.runJavaScript('''
+    //                 (function() {
+    //                   const element = document.querySelector('div.goR-Rvpremium-n-overlay');
+    //                   if (element) {
+    //                     element.remove();
+    //                   }
+    //                 })();
+    //                 ''');
+    //   //hide ad = goR-Rvright-rectangle goR-Rvright-rectangle--video goR-Rv goR-Rvno-ts-init
+    //   await controller.runJavaScript('''
+    //                 (function() {
+    //                   const element = document.querySelector('div.goR-Rvright-rectangle.goR-Rvright-rectangle--video.goR-Rv.goR-Rvno-ts-init');
+    //                   if (element) {
+    //                     element.remove();
+    //                   }
+    //                 })();
+    //                 ''');
+    // } else if (sourceSelected == '9') {
+    //   //hide got-it-cc3f8
+    //   await controller.runJavaScript('''
+    //     (function() {
+    //       const button = document.querySelector('a.got-it-cc3f8');
+    //       if (button) {
+    //         button.click();
+    //       } else {
+    //         console.log('Button with the specified class not found.');
+    //         // Optionally, you could send a message back to Flutter using a JavascriptChannel
+    //       }
+    //     })();
+    //     ''');
+    //   //confirm parental-control-confirm-button
+    //   await controller.runJavaScript('''
+    //     (function() {
+    //       const button = document.querySelector('button[data-role="parental-control-confirm-button"]');
+    //       if (button) {
+    //         button.click();
+    //       } else {
+    //         console.log('Button with the specified class not found.');
+    //         // Optionally, you could send a message back to Flutter using a JavascriptChannel
+    //       }
+    //     })();
+    //     ''');
+    // }
     if (kDebugMode) {
       print('Crawl data: $sourceSelected');
     }
     //Crawl data
-    var selectedSource = _sourcePaths[int.parse(sourceSelected!)];
     String linksJson = '';
     linksJson =
         await controller.runJavaScriptReturningResult(
