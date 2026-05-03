@@ -196,6 +196,31 @@ class _MyHomePageState extends State<MyHomePage>
         })();
       ''',
     ),
+    SourcePath(
+      'krx18.com',
+      '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("article.item.movies");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("div.poster").querySelector("a").href,
+          image: item.querySelector("div.poster").querySelector("img").src,
+          duration: "",
+          title: item.querySelector("div.data").querySelector("h3").querySelector("a").textContent,
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      '''
+      (function() {
+        const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
+        const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
+        if (element) {
+          return element[0].href;
+        }
+        return '';
+      })();
+      ''',
+    ),
   ];
 
   void initStateAsync() async {
@@ -327,206 +352,206 @@ class _MyHomePageState extends State<MyHomePage>
     }
     //Crawl data
     String linksJson = '';
-    if (sourceSelected == '0') {
-      linksJson =
-          await controller.runJavaScriptReturningResult(
-                _sourcePaths[int.parse(sourceSelected!)].crawlJquery,
-              )
-              as String? ??
-          '[]';
-      // linksJson =
-      //     await controller.runJavaScriptReturningResult('''
-      //               (function() {
-      //                 const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
-      //                 const imageData = Array.from(images).map(item => ({
-      //                   href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
-      //                   image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
-      //                   duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
-      //                   title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
-      //                 }));
-      //                 return JSON.stringify(imageData);
-      //               })();
-      //               ''')
-      //         as String? ??
-      //     '[]';
-    } else if (sourceSelected == '1') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.href,
-                        image: item.querySelector("img").src,
-                        duration: "",
-                        title: item.getAttribute("title"),
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '2') {
-      //Click confirm age button if exists
-      await controller.runJavaScript('''
-                    (function() {
-                      const button = document.querySelector('button[data-event=age_verification]');
-                      if (button) {
-                        button.click();
-                      } else {
-                        console.log('Button with the specified class not found.');
-                        // Optionally, you could send a message back to Flutter using a JavascriptChannel
-                      }
-                    })();
-                    ''');
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("li.pcVideoListItem.js-pop.videoblock");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").href,
-                        image: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("img").src,
-                        duration: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("var").innerText,
-                        title: item.querySelector("div.wrap").querySelector("div.thumbnail-info-wrapper").querySelector("span.title").querySelector("a").title,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '3') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("article.item.movies");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("div.poster").querySelector("a").href,
-                        image: item.querySelector("div.poster").querySelector("img").src,
-                        duration: "",
-                        title: item.querySelector("div.data").querySelector("h3").querySelector("a").textContent,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '4') {
-      //Click confirm age button if exists
-      await controller.runJavaScript('''
-                    (function() {
-                      const button = document.querySelector('#okButton');
-                      if (button) {
-                        button.click();
-                      } else {
-                        console.log('Button with the specified class not found.');
-                        // Optionally, you could send a message back to Flutter using a JavascriptChannel
-                      }
-                    })();
-                    ''');
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.video-preview-screen.video-item.thumb-item");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("a").href,
-                        image: "https:" + item.querySelector("a").querySelector("ul.screenshots-list").querySelector("li.screenshot-item.active").getAttribute("data-src"),
-                        duration: item.querySelector("div.durations").querySelector("i").innerText,
-                        title: item.querySelector("p.inf").querySelector("a").title,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '5') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.card");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("center").querySelector("a").href,
-                        image: item.querySelector("center").querySelector("a").querySelectorAll("picture")[0].querySelectorAll("source")[0].getAttribute("data-srcset"),
-                        duration: "",
-                        title: item.querySelector("div.card-block").querySelector("a").querySelector("h1").innerText,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '6') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.card.sub.group");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("a.item-link").href,
-                        image: item.querySelector("a.item-link").querySelector("img").src,
-                        duration: item.querySelector("a.item-link").querySelector("span.badge.float-right").innerText,
-                        title: item.querySelector("div.item-footer").querySelector("a.item-title").title,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '7') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.mb.hdy");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("div.mbcontent").querySelector("a").href,
-                        image: item.querySelector("div.mbcontent").querySelector("img").src,
-                        duration: item.querySelector("div.mbunder").querySelector("p.mbstats").querySelector("span.mbtim").innerHTML,
-                        title: item.querySelector("div.mbunder").querySelector("p.mbtit").querySelector("a").innerHTML,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '8') {
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.frame-block.thumb-block");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("div.thumb-under").querySelector("a").href,
-                        image: item.querySelector("div.thumb-inside").querySelector("img").src,
-                        duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
-                        title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    } else if (sourceSelected == '9') {
-      // var body =
-      //     await controller.runJavaScriptReturningResult(
-      //           'document.body.innerHTML',
-      //         )
-      //         as String? ??
-      //     '[]';
-      // if (kDebugMode) {
-      //   print('body: $body');
-      // }
-      linksJson =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const dataArrayString = document.querySelectorAll("div.thumb-list__item");
-                      const datas = Array.from(dataArrayString).map(item => ({
-                        href: item.querySelector("div.video-thumb-info")?.querySelector("a")?.href ?? "NotFound",
-                        image: item.querySelector("a.video-thumb__image-container")?.querySelector("img")?.src ?? "NotFound",
-                        duration: "",
-                        title: item.querySelector("div.video-thumb-info")?.querySelector("a")?.textContent ?? "NotFound",
-                      }));
-                      return JSON.stringify(datas);
-                    })();
-                    ''')
-              as String? ??
-          '[]';
-    }
+    linksJson =
+        await controller.runJavaScriptReturningResult(
+              _sourcePaths[int.parse(sourceSelected!)].crawlJquery,
+            )
+            as String? ??
+        '[]';
+    // if (sourceSelected == '0') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const images = document.querySelector("div.main-wrap").querySelector("div.thumb-list.thumb-list--sidebar.thumb-list--middle-line.thumb-list--bigger-with-cube").querySelectorAll("div.thumb-list__item.video-thumb.video-thumb--type-video");
+    //                   const imageData = Array.from(images).map(item => ({
+    //                     href: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").getAttribute("href"),
+    //                     image: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("img").getAttribute("src"),
+    //                     duration: item.querySelector("a.video-thumb__image-container.role-pop.thumb-image-container").querySelector("div[data-role=video-duration]").innerText,
+    //                     title: item.querySelector("div.video-thumb-info").querySelector("a.root-48288").innerText,
+    //                   }));
+    //                   return JSON.stringify(imageData);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '1') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("a.movie-item.m-block");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.href,
+    //                     image: item.querySelector("img").src,
+    //                     duration: "",
+    //                     title: item.getAttribute("title"),
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '2') {
+    //   //Click confirm age button if exists
+    //   await controller.runJavaScript('''
+    //                 (function() {
+    //                   const button = document.querySelector('button[data-event=age_verification]');
+    //                   if (button) {
+    //                     button.click();
+    //                   } else {
+    //                     console.log('Button with the specified class not found.');
+    //                     // Optionally, you could send a message back to Flutter using a JavascriptChannel
+    //                   }
+    //                 })();
+    //                 ''');
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("li.pcVideoListItem.js-pop.videoblock");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").href,
+    //                     image: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("img").src,
+    //                     duration: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("var").innerText,
+    //                     title: item.querySelector("div.wrap").querySelector("div.thumbnail-info-wrapper").querySelector("span.title").querySelector("a").title,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '3') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("article.item.movies");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("div.poster").querySelector("a").href,
+    //                     image: item.querySelector("div.poster").querySelector("img").src,
+    //                     duration: "",
+    //                     title: item.querySelector("div.data").querySelector("h3").querySelector("a").textContent,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '4') {
+    //   //Click confirm age button if exists
+    //   await controller.runJavaScript('''
+    //                 (function() {
+    //                   const button = document.querySelector('#okButton');
+    //                   if (button) {
+    //                     button.click();
+    //                   } else {
+    //                     console.log('Button with the specified class not found.');
+    //                     // Optionally, you could send a message back to Flutter using a JavascriptChannel
+    //                   }
+    //                 })();
+    //                 ''');
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.video-preview-screen.video-item.thumb-item");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("a").href,
+    //                     image: "https:" + item.querySelector("a").querySelector("ul.screenshots-list").querySelector("li.screenshot-item.active").getAttribute("data-src"),
+    //                     duration: item.querySelector("div.durations").querySelector("i").innerText,
+    //                     title: item.querySelector("p.inf").querySelector("a").title,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '5') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.card");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("center").querySelector("a").href,
+    //                     image: item.querySelector("center").querySelector("a").querySelectorAll("picture")[0].querySelectorAll("source")[0].getAttribute("data-srcset"),
+    //                     duration: "",
+    //                     title: item.querySelector("div.card-block").querySelector("a").querySelector("h1").innerText,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '6') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.card.sub.group");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("a.item-link").href,
+    //                     image: item.querySelector("a.item-link").querySelector("img").src,
+    //                     duration: item.querySelector("a.item-link").querySelector("span.badge.float-right").innerText,
+    //                     title: item.querySelector("div.item-footer").querySelector("a.item-title").title,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '7') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.mb.hdy");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("div.mbcontent").querySelector("a").href,
+    //                     image: item.querySelector("div.mbcontent").querySelector("img").src,
+    //                     duration: item.querySelector("div.mbunder").querySelector("p.mbstats").querySelector("span.mbtim").innerHTML,
+    //                     title: item.querySelector("div.mbunder").querySelector("p.mbtit").querySelector("a").innerHTML,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '8') {
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.frame-block.thumb-block");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("div.thumb-under").querySelector("a").href,
+    //                     image: item.querySelector("div.thumb-inside").querySelector("img").src,
+    //                     duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
+    //                     title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // } else if (sourceSelected == '9') {
+    //   // var body =
+    //   //     await controller.runJavaScriptReturningResult(
+    //   //           'document.body.innerHTML',
+    //   //         )
+    //   //         as String? ??
+    //   //     '[]';
+    //   // if (kDebugMode) {
+    //   //   print('body: $body');
+    //   // }
+    //   linksJson =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const dataArrayString = document.querySelectorAll("div.thumb-list__item");
+    //                   const datas = Array.from(dataArrayString).map(item => ({
+    //                     href: item.querySelector("div.video-thumb-info")?.querySelector("a")?.href ?? "NotFound",
+    //                     image: item.querySelector("a.video-thumb__image-container")?.querySelector("img")?.src ?? "NotFound",
+    //                     duration: "",
+    //                     title: item.querySelector("div.video-thumb-info")?.querySelector("a")?.textContent ?? "NotFound",
+    //                   }));
+    //                   return JSON.stringify(datas);
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '[]';
+    // }
     if (kDebugMode) {
       print('linksJson: $linksJson');
     }
@@ -608,144 +633,144 @@ class _MyHomePageState extends State<MyHomePage>
     if (kDebugMode) {
       print('Call next page');
     }
-    if (sourceSelected == '0') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult(
-                _sourcePaths[int.parse(sourceSelected!)].nextPageJquery,
-              )
-              as String? ??
-          '';
-      // nextUrl =
-      //     await controller.runJavaScriptReturningResult('''
-      //               (function() {
-      //                 const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
-      //                 if (element) {
-      //                   return element.getAttribute("href");
-      //                 }
-      //                 return '';
-      //               })();
-      //               ''')
-      //         as String? ??
-      //     '';
-    } else if (sourceSelected == '1') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelectorAll("a.page-numbers");
-                      if (element) {
-                        return element[element.length - 1].href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '2') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelectorAll("li.page_next");
-                      if (element) {
-                        return element[element.length - 1].querySelector("a").href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '3') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
-                      const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
-                      if (element) {
-                        return element[0].href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '4') {
-      if (isManual == false && crawlItems.length <= 500) {
-        await controller.runJavaScript('''
-          (function() {
-            const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
-            if (element) {
-              return element.click();
-            }
-          })();
-          ''');
-        await onNavigationDelegatePageFinished(url);
-      }
-    } else if (sourceSelected == '5') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const nextIndex = parseInt(document.querySelector("#page_right_side").querySelectorAll("span.current")[0].innerText) + 1;
-                      const element = Array.from(document.querySelector("#page_right_side").querySelectorAll("a")).find(link => link.innerText == nextIndex);
-                      if (element) {
-                        return element.href;
-                      }
-                      return "";
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '6') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelector("div.pagination-pages").querySelector("a[aria-label='Next page']");
-                      if (element) {
-                        return element.href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '7') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
-                      if (element) {
-                        return element.href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '8') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelector("div.pagination ").querySelector("a.next-page");
-                      if (element) {
-                        return element.href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    } else if (sourceSelected == '9') {
-      nextUrl =
-          await controller.runJavaScriptReturningResult('''
-                    (function() {
-                      const element = document.querySelector("a.prev-next-list-link.prev-next-list-link--next");
-                      if (element) {
-                        return element.href;
-                      }
-                      return '';
-                    })();
-                    ''')
-              as String? ??
-          '';
-    }
+    nextUrl =
+        await controller.runJavaScriptReturningResult(
+              _sourcePaths[int.parse(sourceSelected!)].nextPageJquery,
+            )
+            as String? ??
+        '';
+    // if (sourceSelected == '0') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelector("div.main-wrap").querySelector("a.prev-next-list-link.prev-next-list-link--next");
+    //                   if (element) {
+    //                     return element.getAttribute("href");
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '1') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelectorAll("a.page-numbers");
+    //                   if (element) {
+    //                     return element[element.length - 1].href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '2') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelectorAll("li.page_next");
+    //                   if (element) {
+    //                     return element[element.length - 1].querySelector("a").href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '3') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const nextIndex = parseInt(document.querySelectorAll("div.navigation")[0].querySelectorAll("span.page.current")[0].innerText) + 1;
+    //                   const element = document.querySelectorAll("div.navigation")[0].querySelectorAll("a[title='"+nextIndex+"']");
+    //                   if (element) {
+    //                     return element[0].href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '4') {
+    //   if (isManual == false && crawlItems.length <= 500) {
+    //     await controller.runJavaScript('''
+    //       (function() {
+    //         const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
+    //         if (element) {
+    //           return element.click();
+    //         }
+    //       })();
+    //       ''');
+    //     await onNavigationDelegatePageFinished(url);
+    //   }
+    // } else if (sourceSelected == '5') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const nextIndex = parseInt(document.querySelector("#page_right_side").querySelectorAll("span.current")[0].innerText) + 1;
+    //                   const element = Array.from(document.querySelector("#page_right_side").querySelectorAll("a")).find(link => link.innerText == nextIndex);
+    //                   if (element) {
+    //                     return element.href;
+    //                   }
+    //                   return "";
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '6') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelector("div.pagination-pages").querySelector("a[aria-label='Next page']");
+    //                   if (element) {
+    //                     return element.href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '7') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelector("div.numlist2").querySelector("a.nmnext");
+    //                   if (element) {
+    //                     return element.href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '8') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelector("div.pagination ").querySelector("a.next-page");
+    //                   if (element) {
+    //                     return element.href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // } else if (sourceSelected == '9') {
+    //   nextUrl =
+    //       await controller.runJavaScriptReturningResult('''
+    //                 (function() {
+    //                   const element = document.querySelector("a.prev-next-list-link.prev-next-list-link--next");
+    //                   if (element) {
+    //                     return element.href;
+    //                   }
+    //                   return '';
+    //                 })();
+    //                 ''')
+    //           as String? ??
+    //       '';
+    // }
     if (nextUrl != null &&
         nextUrl!.isNotEmpty &&
         isManual == false &&
