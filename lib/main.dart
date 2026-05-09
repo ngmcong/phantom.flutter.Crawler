@@ -374,6 +374,55 @@ class _MyHomePageState extends State<MyHomePage>
       })();
       ''',
     ),
+    SourcePath(
+      name: 'javmost.ws',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("div.card");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("center").querySelector("a").href,
+          image: item.querySelector("center").querySelector("a").querySelectorAll("picture")[0].querySelectorAll("source")[0].getAttribute("data-srcset"),
+          duration: "",
+          title: item.querySelector("div.card-block").querySelector("a").querySelector("h1").innerText,
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const nextIndex = parseInt(document.querySelector("#page_right_side").querySelectorAll("span.current")[0].innerText) + 1;
+        const element = Array.from(document.querySelector("#page_right_side").querySelectorAll("a")).find(link => link.innerText == nextIndex);
+        if (element) {
+          return element.href;
+        }
+        return "";
+      })();
+      ''',
+    ),
+    SourcePath(
+      name: 'supjav.com',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("div.post");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("a").href,
+          image: item.querySelector("a").querySelector("img").src,
+          duration: "",
+          title: item.querySelector("a").getAttribute("title"),
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const element = document.querySelector("li.next-page").querySelector("a");
+        if (element) {
+          return element.href;
+        }
+        return '';
+      })();
+      ''',
+    ),
   ];
 
   void initStateAsync() async {
@@ -960,6 +1009,9 @@ class _MyHomePageState extends State<MyHomePage>
 
     controller =
         WebViewController()
+          ..setUserAgent(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          )
           ..setJavaScriptMode(JavaScriptMode.unrestricted)
           ..setNavigationDelegate(
             NavigationDelegate(
@@ -976,6 +1028,15 @@ class _MyHomePageState extends State<MyHomePage>
                 // if (currentUrl?.isNotEmpty == true) {
                 //   await onNavigationDelegatePageFinished(currentUrl!);
                 // }
+              },
+              onWebResourceError: (WebResourceError error) {
+                if (kDebugMode) {
+                  print('''
+                    Mã lỗi: ${error.errorCode}
+                    Mô tả: ${error.description}
+                    Loại lỗi: ${error.errorType}
+                  ''');
+                }
               },
             ),
           );

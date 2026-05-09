@@ -41,5 +41,10 @@
 			<string>com.googleusercontent.apps.813203632022-ei931pc7hvrvfa9l1bimneeq00o7s360.apps.googleusercontent.com</string>
 		</dict>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
