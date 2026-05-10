@@ -7,6 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -185,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage>
           const images = document.querySelectorAll("div.mb.hdy");
           const imageData = Array.from(images).map(item => ({
             href: item.querySelector("div.mbcontent").querySelector("a").href,
-            image: item.querySelector("div.mbcontent").querySelector("a").querySelector("img").src,
+            image: item.querySelector("div.mbcontent").querySelector("a").querySelector("img").getAttribute("data-src") ?? "",
             duration: item.querySelector("div.mbunder").querySelector("p.mbstats").querySelector("span.mbtim").textContent,
             title: item.querySelector("div.mbunder").querySelector("p.mbtit").textContent,
           }));
@@ -1072,35 +1073,59 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget buildImage(String imageStr) {
+    // Loại bỏ khoảng trắng thừa nếu có
+    imageStr = imageStr.trim();
+
     // 1. Kiểm tra nếu là ảnh Base64
-    if (imageStr.startsWith('data:image')) {
-      // Tách bỏ phần header "data:image/gif;base64," để lấy nội dung base64 thực sự
-      final base64String = imageStr.split(',').last;
-      if (kDebugMode) {
-        print(
-          'Decoding Base64 image: {base64String}, length: ${base64String.length}',
+    if (imageStr.startsWith('data:image') || !imageStr.startsWith('http')) {
+      try {
+        String base64Body =
+            imageStr.contains(',') ? imageStr.split(',').last : imageStr;
+
+        // Loại bỏ các ký tự không hợp lệ trong Base64 (như xuống dòng)
+        base64Body = base64Body.replaceAll(RegExp(r'\s+'), '');
+        if (kDebugMode) {
+          print("Ảnh base64: $imageStr");
+        }
+        return Image.memory(
+          base64Decode(base64Body),
+          fit: BoxFit.cover,
+          cacheWidth: 300,
+          gaplessPlayback: true,
+          errorBuilder:
+              (context, error, stackTrace) => const Icon(Icons.broken_image),
         );
+      } catch (e) {
+        if (kDebugMode) print('Lỗi decode Base64: $e');
+        return const Icon(Icons.broken_image);
       }
-      return Image.memory(
-        base64Decode(base64String),
-        fit: BoxFit.cover,
-        cacheWidth: 300,
-        gaplessPlayback: true,
-      );
     }
 
+    if (kDebugMode) {
+      print("Url ảnh: $imageStr");
+    }
     // 2. Nếu là URL bình thường
-    return Image.network(
-      imageStr,
+    return CachedNetworkImage(
+      imageUrl: imageStr,
       fit: BoxFit.cover,
-      headers: {
-        'User-Agent': 'Mozilla/5.0...',
+      // ĐÂY LÀ PHẦN QUAN TRỌNG ĐỂ KHÔNG BỊ RESET
+      httpHeaders: const {
+        'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+        'Host': 'static-eu-cdn.eporner.com', // Phải có cái này!
         'Accept':
-            'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Connection': 'keep-alive',
       },
-      // Luôn nên có errorBuilder để tránh crash khi link ảnh chết
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image),
-      gaplessPlayback: true,
+      placeholder:
+          (context, url) =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      errorWidget: (context, url, error) {
+        if (kDebugMode) print('Lỗi load ảnh: $error');
+        return const Icon(Icons.broken_image);
+      },
+      memCacheWidth: 300,
+      // errorWidget: (context, url, error) => Icon(Icons.error),
     );
   }
 
