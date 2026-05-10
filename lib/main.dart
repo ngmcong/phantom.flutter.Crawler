@@ -1109,14 +1109,14 @@ class _MyHomePageState extends State<MyHomePage>
       imageUrl: imageStr,
       fit: BoxFit.cover,
       // ĐÂY LÀ PHẦN QUAN TRỌNG ĐỂ KHÔNG BỊ RESET
-      httpHeaders: const {
-        'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
-        'Host': 'static-eu-cdn.eporner.com', // Phải có cái này!
-        'Accept':
-            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Connection': 'keep-alive',
-      },
+      // httpHeaders: const {
+      //   'User-Agent':
+      //       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+      //   'Host': 'static-eu-cdn.eporner.com', // Phải có cái này!
+      //   'Accept':
+      //       'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      //   'Connection': 'keep-alive',
+      // },
       placeholder:
           (context, url) =>
               const Center(child: CircularProgressIndicator(strokeWidth: 2)),
