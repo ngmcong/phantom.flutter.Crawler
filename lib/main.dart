@@ -424,6 +424,53 @@ class _MyHomePageState extends State<MyHomePage>
       })();
       ''',
     ),
+    SourcePath(
+      name: 'xvideos.com',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("div.frame-block.thumb-block");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("div.thumb-under").querySelector("a").href,
+          image: item.querySelector("div.thumb-inside").querySelector("img").src,
+          duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
+          title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const element = document.querySelector("div.pagination ").querySelector("a.next-page");
+        if (element) {
+          return element.href;
+        }
+        return '';
+      })();
+      ''',
+    ),
+    SourcePath(
+      name: 'porntrex.com',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("div.video-preview-screen.video-item.thumb-item");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("a").href,
+          image: "https:" + item.querySelector("a").querySelector("ul.screenshots-list").querySelector("li.screenshot-item.active").getAttribute("data-src"),
+          duration: item.querySelector("div.durations").querySelector("i").innerText,
+          title: item.querySelector("p.inf").querySelector("a").title,
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
+        if (element) {
+          return element.click();
+        }
+      })();
+      ''',
+    ),
   ];
 
   void initStateAsync() async {
