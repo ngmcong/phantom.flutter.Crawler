@@ -431,7 +431,7 @@ class _MyHomePageState extends State<MyHomePage>
         const dataArrayString = document.querySelectorAll("div.frame-block.thumb-block");
         const datas = Array.from(dataArrayString).map(item => ({
           href: item.querySelector("div.thumb-under").querySelector("a").href,
-          image: item.querySelector("div.thumb-inside").querySelector("img").src,
+          image: item.querySelector("div.thumb-inside").querySelector("img").getAttribute("src"),
           duration: item.querySelector("div.thumb-under").querySelector("p.metadata").querySelector("span.duration").innerHTML,
           title: item.querySelector("div.thumb-under").querySelector("p.title").querySelector("a").textContent,
         }));
@@ -464,10 +464,11 @@ class _MyHomePageState extends State<MyHomePage>
       ''',
       nextPageJquery: '''
       (function() {
-        const element = document.querySelectorAll("div.pagination-holder")[0].querySelector("ul").querySelector("li.next").querySelector("a");
+        const element = document.querySelector("li.next").querySelector("a");
         if (element) {
-          return element.click();
+          return element.href;
         }
+        return '';
       })();
       ''',
     ),
@@ -1183,9 +1184,9 @@ class _MyHomePageState extends State<MyHomePage>
       }
     }
 
-    if (kDebugMode) {
-      print("Url ảnh: $imageStr");
-    }
+    // if (kDebugMode) {
+    //   print("Url ảnh: $imageStr");
+    // }
     // 2. Nếu là URL bình thường
     return CachedNetworkImage(
       imageUrl: imageStr,
