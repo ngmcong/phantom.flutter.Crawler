@@ -471,6 +471,41 @@ class _MyHomePageState extends State<MyHomePage>
       })();
       ''',
     ),
+    SourcePath(
+      name: 'pornhub.com',
+      crawlJquery: '''
+      (function() {
+        const dataArrayString = document.querySelectorAll("li.pcVideoListItem.js-pop.videoblock");
+        const datas = Array.from(dataArrayString).map(item => ({
+          href: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").href,
+          image: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("img").src,
+          duration: item.querySelector("div.wrap").querySelector("div.phimage").querySelector("a").querySelector("var").innerText,
+          title: item.querySelector("div.wrap").querySelector("div.thumbnail-info-wrapper").querySelector("span.title").querySelector("a").title,
+        }));
+        return JSON.stringify(datas);
+      })();
+      ''',
+      nextPageJquery: '''
+      (function() {
+        const element = document.querySelectorAll("li.page_next");
+        if (element) {
+          return element[element.length - 1].querySelector("a").href;
+        }
+        return '';
+      })();
+      ''',
+      confirmJquery: '''
+      (function() {
+        const button = document.querySelector('button[data-event=age_verification]');
+        if (button) {
+          button.click();
+        } else {
+          console.log('Button with the specified class not found.');
+          // Optionally, you could send a message back to Flutter using a JavascriptChannel
+        }
+      })();
+      ''',
+    ),
   ];
 
   void initStateAsync() async {
